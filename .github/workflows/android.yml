@@ -70,13 +70,17 @@ jobs:
           # node_modules/react-native/gradle/libs.versions.toml for RN 0.88:
           # compileSdk 37, buildTools 37.0.0, targetSdk 36, NDK 27.1.12297006.
           # The NDK is needed to strip the prebuilt native libraries.
+          # API 37 is published under the minor-versioned name android-37.0;
+          # plain "platforms;android-37" does not exist. NDK 27 is needed to
+          # strip the prebuilt .so files. CMake is not installed: this project
+          # has no native code, and 3.22.1 is no longer in the SDK repository.
           SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           SDKM="$(command -v sdkmanager || ls -d "$SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
           echo "Using $SDKM"
           yes | "$SDKM" --licenses > /dev/null 2>&1 || true
-          "$SDKM" --install "platform-tools" "platforms;android-37" \
-            "build-tools;37.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
+          "$SDKM" --install "platform-tools" "platforms;android-37.0" \
+            "build-tools;37.0.0" "ndk;27.1.12297006"
           "$SDKM" --list_installed | head -40
 
       - name: Gradle cache
@@ -142,8 +146,8 @@ jobs:
           echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
           SDKM="$(command -v sdkmanager || ls -d "$SDK_ROOT"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
           yes | "$SDKM" --licenses > /dev/null 2>&1 || true
-          "$SDKM" --install "platform-tools" "platforms;android-37" \
-            "build-tools;37.0.0" "ndk;27.1.12297006" "cmake;3.22.1"
+          "$SDKM" --install "platform-tools" "platforms;android-37.0" \
+            "build-tools;37.0.0" "ndk;27.1.12297006"
 
       # `secrets` is not an available context inside `if:`, and referencing it
       # there makes the whole workflow file invalid. Pass it in through `env`

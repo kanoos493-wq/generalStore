@@ -16,9 +16,10 @@ was produced here — the steps below are how the first real APK gets made.
 | Android Gradle Plugin | 9.x | React Native 0.88 gradle plugin (`node_modules/@react-native/gradle-plugin`) |
 | Kotlin | 2.2.0 | `android/build.gradle` |
 | compileSdk / buildTools | **37** / 37.0.0 | `android/build.gradle` (mirrors RN 0.88's `gradle/libs.versions.toml`) |
+| SDK package names | `platforms;android-37.0`, `build-tools;37.0.0` | installed by the workflow |
 | targetSdk | 36 | `android/build.gradle` |
 | minSdk | 24 (Android 7.0) | `android/build.gradle` |
-| NDK / CMake | 27.1.12297006 / 3.22.1 | installed by the workflow (`sdkmanager`) |
+| NDK | 27.1.12297006 | installed by the workflow (`sdkmanager`); CMake is not needed — the project has no native source |
 
 Pinned versions live in `android/build.gradle`, `android/app/build.gradle`,
 `android/gradle/wrapper/gradle-wrapper.properties` and `.github/workflows/android.yml`. Change them
@@ -124,7 +125,7 @@ npm run android                 # install the debug build on a USB-connected pho
 | --- | --- |
 | `SDK location not found` | No Android SDK on the machine. Use the GitHub Actions path, or create `android/local.properties`. |
 | `Unsupported class file major version` / Gradle JDK error | Wrong JDK. Use **21**; Gradle 9 and AGP 9 reject 8/11. |
-| `platforms;android-37 not found` | `sdkmanager --list` on the runner; the workflow installs it explicitly. Bump `compileSdk` only together with the `sdkmanager` line. |
+| `Failed to find package 'platforms;android-37'` | API 37 is published as `platforms;android-37.0` (minor-versioned naming). Bump `compileSdk` only together with the `sdkmanager` line. |
 | `NDK not configured` / CMake error | The new architecture builds native code; the workflow installs NDK 27.1.12297006 and CMake 3.22.1. |
 | Metro “Unable to load script” | The JS bundle is missing from a debug build without Metro — use `npm run android:assemble` (bundles JS) or start Metro. |
 | Blank screen after launch | Check `adb logcat | grep -i react`; usually a missing native module registration (`GeneralStorePackage`). |
