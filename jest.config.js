@@ -10,6 +10,7 @@ module.exports = {
         '<rootDir>/__tests__/core/**/*.test.ts',
         '<rootDir>/__tests__/db/**/*.test.ts',
         '<rootDir>/__tests__/services/**/*.test.ts',
+        '<rootDir>/__tests__/perf/**/*.test.ts',
       ],
       moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     },
