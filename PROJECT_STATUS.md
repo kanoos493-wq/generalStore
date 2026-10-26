@@ -119,6 +119,26 @@ search 2.4 ms, Urdu search 2.0 ms, barcode lookup 1.3 ms, sales page 1.1 ms, 30-
 - **Tests** — `__tests__/ui/layout.test.tsx` asserts the inset contract and brand-mark basics.
   Current totals: **135 passing**.
 
+### ✅ APK built in GitHub Actions (verified)
+
+| Item | Result |
+| --- | --- |
+| Workflow | [`.github/workflows/android.yml`](.github/workflows/android.yml) — 3 jobs |
+| Run | `40361107093` on commit `1ffc58b`, `main`, all jobs green |
+| verify job | `npm ci` → typecheck → ESLint → Jest, all passing on the runner (independent of this machine) |
+| apk job | `./gradlew assembleDebug assembleRelease` → `general-store-debug-apk` (46.25 MB), `general-store-release-apk` (26.91 MB) |
+| Bundle check | the workflow fails if either APK lacks `assets/index.android.bundle`; both passed |
+| Inspected locally | `assets/index.android.bundle` present and Hermes bytecode (`c6 1f bc 03`), 4 ABIs, adaptive + 5-density launcher icons, `DukanDost` label and `Theme.GeneralStore.Starting` in `resources.arsc`, brand teal `#0F766E` |
+
+Fixed on the way there, each a real failure rather than a guess: `secrets` used inside `if:` made
+GitHub reject the whole workflow file (0 jobs); `android-actions/setup-android@v3` calls the removed
+`sdkmanager tools` package; `platforms;android-37` / `cmake;3.22.1` are no longer published (API 37
+ships as `android-37.0`); and two Kotlin modules read `currentActivity` off the module instead of
+the React context.
+
+**Still unverified:** the APK has not been installed or launched on hardware. Every device-facing
+claim in §7 below stays untested until someone sideloads `general-store-debug-apk`.
+
 ### 🔁 Deliberate deviation from the requested stack
 - **Zod and React Hook Form are not used.** They were installed, never adopted, and removed again
   rather than left as dead dependencies. Validation lives in the service layer with typed
@@ -200,7 +220,8 @@ is performed.
 
 ## 8. Next steps (in order)
 
-1. Push to GitHub, run the workflow, fix any Gradle/SDK issue, install the debug APK on a phone.
+1. ~~Push, run the workflow, fix the Gradle/SDK issues~~ — done, see the APK section above. Remaining:
+   download `general-store-debug-apk` and install it on a phone.
 2. Walk the offline acceptance script on the device: PIN → product → purchase → mixed-unit sale →
    credit customer → payment → return → adjustment → expense → cash closing → report → backup →
    restore → reprint.

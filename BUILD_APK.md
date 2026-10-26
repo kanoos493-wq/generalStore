@@ -47,11 +47,18 @@ Jobs:
 
 1. **verify** — `npm ci`, `npm run typecheck`, `npm run lint`, `npm run test:ci`.
    The whole pipeline stops here if any check fails; the APK job will not run.
-2. **apk** — installs the SDK packages above, then `./gradlew assembleDebug` and uploads:
+2. **apk** — installs the SDK packages above, then `./gradlew assembleDebug assembleRelease` and
+   uploads:
    - `general-store-debug-apk` → `general-store-debug.apk` (the artifact you install)
+   - `general-store-release-apk` → `general-store-release.apk` (same code, release variant)
    - `general-store-debug-logs` → Gradle output, uploaded even on failure
-3. **release** (manual runs only) — `assembleRelease`, signed when the secrets below exist,
-   uploaded as `general-store-release-apk`.
+
+   Before uploading it asserts that **both** APKs contain `assets/index.android.bundle`. The React
+   Native Gradle plugin skips bundling for `debug` by default, which produces an APK that only
+   starts when Metro is reachable; `debuggableVariants = []` in `android/app/build.gradle` turns
+   that off, and this check makes sure it stays off.
+3. **release** (manual runs only) — `assembleRelease` again, signed with the keystore secrets below,
+   uploaded as `general-store-release-signed-apk`.
 
 Download the artifact: **Actions → run → Artifacts → general-store-debug-apk**.
 
@@ -64,9 +71,11 @@ Download the artifact: **Actions → run → Artifacts → general-store-debug-a
 5. Optional: pair a Bluetooth thermal printer in **More → Settings → Printer** before the first
    bill.
 
-The debug APK is signed with the standard Android debug key. It installs fine on a personal phone
-but **cannot** be published to Play, **cannot** be upgraded by a release build signed with a
-different key, and debugs normally (no Play/App Bundle optimisation).
+Both APKs carry the JS bundle, so neither needs a computer or a network to run. The debug APK is
+signed with the standard Android debug key: it installs fine on a personal phone but **cannot** be
+published to Play, **cannot** be upgraded later by a build signed with a different key, and carries
+no Play/App Bundle optimisation. The release APK in the `apk` job is signed the same way until you
+configure a keystore (see §5); after that it is the one to distribute.
 
 ## 5. Release APK signing (optional, for distribution)
 

@@ -20,7 +20,7 @@ advertising SDK and **no `INTERNET` permission** in the Android manifest.
 | ESLint (`npm run lint`) | ✅ clean, 0 problems |
 | Automated tests (`npm test`) | ✅ 135 passing / 16 suites (business logic, SQLite integration, layout, components) |
 | Performance benchmark (`npm run test:bench`) | ✅ measured on a synthetic 2,000 products / 40,000 sales dataset (see §7) |
-| Android APK | ⚠️ **not built on this machine** — no JDK/Android SDK here. The GitHub Actions workflow builds it; see [BUILD_APK.md](BUILD_APK.md) |
+| Android APK | ✅ **built by GitHub Actions** — run 40361107093 on `1ffc58b` produced `general-store-debug-apk` (46.25 MB) and `general-store-release-apk` (26.91 MB), each verified to contain `assets/index.android.bundle`. ⚠️ **Not yet installed or launched on a phone** — see [BUILD_APK.md](BUILD_APK.md) |
 | Database encryption (SQLCipher) | ❌ **not implemented**. The database file is plain SQLite protected by the PIN gate and app-private storage. See [SECURITY.md](SECURITY.md) |
 
 <sub>`PROJECT_STATUS.md` contains the full, honest item-by-item status.</sub>
