@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!--
+    DukanDost — editable brand mark.
+    Teal rounded square with a white shopping basket: the everyday symbol of a
+    kiryana store. Regenerate the Android launcher PNGs from the same geometry
+    with `node tools/icon-generator/generate.js`.
+  -->
+  <rect width="512" height="512" rx="113" fill="#0F766E" />
+
+  <!-- basket body: rim wider than base, two woven slots cut out -->
+  <path
+    fill="#FFFFFF"
+    fill-rule="evenodd"
+    d="M96 228 H416 L360 384 H152 Z
+       M128 272 H384 V304 H128 Z
+       M144 336 H368 V368 H144 Z" />
+
+  <!-- handle -->
+  <path
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="32"
+    stroke-linecap="round"
+    d="M176 208 A80 80 0 0 1 336 208" />
+</svg>

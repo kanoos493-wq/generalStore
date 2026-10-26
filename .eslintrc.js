@@ -9,4 +9,14 @@ module.exports = {
     'no-bitwise': 'off',
     'react-native/no-inline-styles': 'off',
   },
+  overrides: [
+    {
+      // Node-only scripts (icon generator, migration helpers).
+      files: ['tools/**/*.js', 'scripts/**/*.js'],
+      env: { node: true },
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+      },
+    },
+  ],
 };

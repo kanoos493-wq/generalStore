@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Basket body: rim wider than base, with two woven slots cut out.
+         Geometry matches tools/icon-generator/generate.js at scale 46. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M30.0,46.6 L78.0,46.6 L69.6,74.0 L38.4,74.0 Z M38.4,55.2 L69.6,55.2 L69.6,58.4 L38.4,58.4 Z M40.2,64.4 L67.8,64.4 L67.8,67.6 L40.2,67.6 Z" />
+
+    <!-- Handle springing from the rim. -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.6"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M43.2,44.3 A11.0,11.0 0 0 1 64.8,44.3" />
+</vector>

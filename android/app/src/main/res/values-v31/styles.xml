@@ -1,0 +1,13 @@
+<resources>
+
+    <!-- Android 12+ system splash screen: brand background and the basket
+         mark, masked by the launcher into its own shape. The system hides it
+         automatically once the activity draws its first frame. -->
+    <style name="Theme.GeneralStore.Starting" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:windowSplashScreenBackground">@color/splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/splash_background</item>
+    </style>
+
+</resources>

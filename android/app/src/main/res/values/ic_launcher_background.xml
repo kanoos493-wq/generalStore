@@ -1,0 +1,5 @@
+<resources>
+    <!-- Adaptive-icon background: the brand teal. -->
+    <color name="ic_launcher_background">#0F766E</color>
+    <color name="splash_background">#0F766E</color>
+</resources>
