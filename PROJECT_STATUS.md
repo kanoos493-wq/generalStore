@@ -104,6 +104,21 @@ search 2.4 ms, Urdu search 2.0 ms, barcode lookup 1.3 ms, sales page 1.1 ms, 30-
 - Batch/expiry tracking workflow.
 - Biometric unlock, screenshot blocking.
 
+### ✅ Layout safety and branding (new since the first pass)
+- **System bars & insets** — `Screen`, `BottomBar`, the bottom tab bar and every absolute FAB/footer
+  read `useSafeAreaInsets()`; the tab bar grows by the navigation-bar height so gesture and
+  three-button modes both keep labels clear. POS (header hidden) pads its own top bar.
+- **Keyboard** — `adjustResize` in the manifest, `keyboardShouldPersistTaps="handled"` plus
+  `keyboardDismissMode="on-drag"` on every scroll surface, scrollable modal sheets with an
+  inset-aware bottom, `decimal-pad`/`number-pad` keyboards on money, quantity and PIN fields.
+  PIN entry uses the app's own keypad, so no OS keyboard covers it.
+- **Branding** — official name **DukanDost**, editable vector logo, generated launcher PNGs for all
+  five densities, adaptive + monochrome icons, API 24–30 and API 31+ splash themes, in-app brand
+  mark on Lock and About, and shared design tokens incl. `motion`. See BRANDING.md.
+- **Reduced motion** — `useReducedMotion()` (AccessibilityInfo) gates sheet animation.
+- **Tests** — `__tests__/ui/layout.test.tsx` asserts the inset contract and brand-mark basics.
+  Current totals: **135 passing**.
+
 ### 🔁 Deliberate deviation from the requested stack
 - **Zod and React Hook Form are not used.** They were installed, never adopted, and removed again
   rather than left as dead dependencies. Validation lives in the service layer with typed
@@ -156,7 +171,34 @@ performance. These are listed as pending device verification, not as passing.
 3. **Unencrypted database** — the biggest security gap; documented in SECURITY.md §9.
 4. **Printer compatibility** — ESC/POS is a de-facto standard, not a guarantee for every model.
 
-## 6. Next steps (in order)
+## 7. Device-configuration acceptance matrix (NOT yet run)
+
+Nothing in this table has been executed — no Android device or emulator exists in this
+environment. Record the real device, Android version and navigation mode against each row when it
+is performed.
+
+| # | Configuration / scenario | Status |
+| --- | --- | --- |
+| 1 | Small phone in portrait (≤ 5.5″, 720p) | ⬜ untested |
+| 2 | Typical phone, gesture navigation | ⬜ untested |
+| 3 | Three-button navigation | ⬜ untested |
+| 4 | Device with cutout / punch-hole camera | ⬜ untested |
+| 5 | Increased display size and/or font scale at max | ⬜ untested |
+| 6 | English LTR / Urdu RTL switch without layout break | ⬜ unit-tested (i18n), ⬜ not device-tested |
+| 7 | Form with keyboard open, last field focused, Save reachable | ⬜ untested |
+| 8 | POS payment sheet with keyboard open; cart preserved | ⬜ untested |
+| 9 | Long product list + long menu scrolling | ⬜ partially covered by the keyset benchmark, ⬜ not device-tested |
+| 10 | Modal/sheet displayed while the keyboard is visible | ⬜ untested |
+| 11 | Background → foreground with an unfinished sale (auto-lock) | ⬜ untested |
+| 12 | Launcher icon on home screen (adaptive mask + themed icon) | ⬜ untested |
+| 13 | Native splash → first frame, empty DB and existing DB | ⬜ untested |
+| 14 | Startup failure shows a retry screen, not an endless spinner | ✅ code path exists (`bootError`), ⬜ not device-tested |
+| 15 | Landscape orientation | ⬜ untested (portrait assumed) |
+| 16 | Light/dark system theme | 🟡 app is light-only; `DayNight` parent resolves to light |
+
+---
+
+## 8. Next steps (in order)
 
 1. Push to GitHub, run the workflow, fix any Gradle/SDK issue, install the debug APK on a phone.
 2. Walk the offline acceptance script on the device: PIN → product → purchase → mixed-unit sale →

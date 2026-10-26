@@ -17,7 +17,7 @@ advertising SDK and **no `INTERNET` permission** in the Android manifest.
 | --- | --- |
 | TypeScript typecheck (`npm run typecheck`) | ✅ clean |
 | ESLint (`npm run lint`) | ✅ clean, 0 problems |
-| Automated tests (`npm test`) | ✅ 130 passing / 15 suites (business logic, SQLite integration, components) |
+| Automated tests (`npm test`) | ✅ 135 passing / 16 suites (business logic, SQLite integration, layout, components) |
 | Performance benchmark (`npm run test:bench`) | ✅ measured on a synthetic 2,000 products / 40,000 sales dataset (see §7) |
 | Android APK | ⚠️ **not built on this machine** — no JDK/Android SDK here. The GitHub Actions workflow builds it; see [BUILD_APK.md](BUILD_APK.md) |
 | Database encryption (SQLCipher) | ❌ **not implemented**. The database file is plain SQLite protected by the PIN gate and app-private storage. See [SECURITY.md](SECURITY.md) |
@@ -170,8 +170,9 @@ PASS core __tests__/services/reports.test.ts  sales/profit/stock reports reconci
 PASS core __tests__/services/receipt.test.ts  receipt layouts, Urdu lines, reprint marking
 PASS core __tests__/services/security.test.ts PIN, lockout, recovery answers, recovery code
 PASS core __tests__/services/backup.test.ts   snapshot, checksum, precheck, version guard, restore
+PASS ui   __tests__/ui/layout.test.tsx        system-bar insets, bottom bar, brand mark
 PASS ui   __tests__/ui/components.test.tsx    shared components render
-Tests: 130 passed, 130 total
+Tests: 135 passed, 135 total
 ```
 
 The database tests are **not mocks**: they open a real SQLite file with `node:sqlite`, run the
@@ -214,6 +215,8 @@ Scaling plan and limits: see [DATABASE_DESIGN.md](DATABASE_DESIGN.md) §8.
   signs, cash reconciliation, rounding.
 - [SECURITY.md](SECURITY.md) — PIN, lockout, recovery, Keystore, backup encryption, role matrix
   and the honest limits of on-device security (including what is *not* encrypted yet).
+- [BRANDING.md](BRANDING.md) — **DukanDost** identity: logo source, generated launcher icons,
+  adaptive/monochrome icon, splash themes, palette and motion tokens.
 - [BUILD_APK.md](BUILD_APK.md) — GitHub Actions workflow, artifact names, signing secrets,
   toolchain versions, troubleshooting.
 - [PROJECT_STATUS.md](PROJECT_STATUS.md) — what is done, what is partial, what is untested.
