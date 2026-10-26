@@ -92,23 +92,42 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('android/**/*.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      - name: Build debug APK
+      - name: Build debug and release APKs
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          # debug   - the sideload build, now with the JS bundle embedded
+          # release - same code, debug-signed only when no keystore secret exists
+          ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace
 
-      - name: Collect APK and logs
+      - name: Collect APKs and verify the JS bundle is inside
         run: |
           mkdir -p artifacts
           cp android/app/build/outputs/apk/debug/app-debug.apk artifacts/general-store-debug.apk
+          cp android/app/build/outputs/apk/release/app-release.apk artifacts/general-store-release.apk
           cp -r android/app/build/outputs/logs artifacts/gradle-logs || true
+          ls -la artifacts
+          # An APK without the bundle only starts when Metro is reachable, which
+          # is not what an offline store app is supposed to need.
+          for apk in artifacts/*.apk; do
+            echo "== $apk"
+            unzip -l "$apk" | grep -q "assets/index.android.bundle" \
+              || { echo "::error::$apk does not contain assets/index.android.bundle"; exit 1; }
+          done
+          echo "Both APKs contain the JS bundle."
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: general-store-debug-apk
           path: artifacts/general-store-debug.apk
+          if-no-files-found: error
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: general-store-release-apk
+          path: artifacts/general-store-release.apk
           if-no-files-found: error
 
       - name: Upload build logs
@@ -177,9 +196,9 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Upload release APK
+      - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: general-store-release-apk
+          name: general-store-release-signed-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error

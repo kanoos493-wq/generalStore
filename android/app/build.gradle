@@ -5,9 +5,19 @@ apply plugin: "com.facebook.react"
 react {
     /* Autolinking with the React Native community CLI. */
     autolinkLibrariesWithApp()
+
+    /*
+     * Bundle the JS into the debug APK too. The default (['debug']) leaves the
+     * bundle out, which makes an APK copied to a phone show "Unable to load
+     * script" unless Metro is running on the same network - useless for the
+     * offline test install this project ships. With the bundle embedded the
+     * app starts on its own; when Metro is reachable, dev support still
+     * prefers the live bundle, so `npm run android` keeps working.
+     */
+    debuggableVariants = []
 }
 
-def enableProguardInReleaseBuilds = true
+def enableProguardInReleaseBuilds = false
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 /**
