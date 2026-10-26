@@ -137,15 +137,27 @@ jobs:
           sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0" \
             "ndk;27.1.12297006" "cmake;3.22.1"
 
+      # `secrets` is not an available context inside `if:`, and referencing it
+      # there makes the whole workflow file invalid. Pass it in through `env`
+      # and decide inside the script instead.
       - name: Decode signing keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/ci-release.keystore
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$GITHUB_WORKSPACE/android/app/ci-release.keystore"
+            echo "path=$GITHUB_WORKSPACE/android/app/ci-release.keystore" >> "$GITHUB_OUTPUT"
+            echo "Signing with the keystore from ANDROID_KEYSTORE_BASE64."
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret; the release APK will be signed with the debug key and is NOT distributable."
+          fi
 
       - name: Build release APK
         working-directory: android
         env:
-          ANDROID_KEYSTORE_PATH: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && format('{0}/app/ci-release.keystore', github.workspace) || '' }}
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
