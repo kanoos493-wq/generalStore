@@ -1,0 +1,1588 @@
+MASTER PROJECT SPECIFICATION: OFFLINE-FIRST GENERAL STORE MANAGEMENT & POS ANDROID APP
+1. Your role and mission
+
+Act as a senior Android application architect, React Native engineer, database engineer, inventory/accounting specialist, UI/UX designer, QA engineer, and DevOps engineer.
+
+Build a complete, production-minded Android mobile application for managing a general store, grocery shop, kiryana store, mini-mart, or small retail business in Pakistan.
+
+This must be a real, functional application—not a UI mockup, clickable prototype, demo dashboard, or collection of nonfunctional screens.
+
+The application must work completely offline after installation. Core functionality must never require an internet connection, online account, cloud database, Firebase, remote API, or paid build service.
+
+Project priorities, in order:
+
+Correct inventory, sales, purchases, accounting, and ledger calculations.
+Reliable offline operation and protection against data loss.
+Fast performance on budget Android devices.
+Simple, touch-friendly workflows for daily shop operations.
+Urdu and English support, including right-to-left layouts.
+Secure PIN protection, backup, restoration, and optional encryption.
+Reproducible APK generation through GitHub Actions.
+
+Do not stop after creating a plan or design. Inspect the repository, create the application, implement features, test it, and produce a working APK through GitHub Actions.
+
+If the repository is empty, initialize the project. If an existing project is present, inspect it and preserve useful working code.
+
+Do not ask me to install Android Studio. Do not use Expo Application Services (EAS) or any Expo cloud build service. Do not make Android Studio a prerequisite for my local development workflow.
+
+2. Required technology stack
+
+Use the following architecture unless a verified technical incompatibility makes a specific choice impossible. If you change a component, document why and select a compatible alternative before implementing it.
+
+Mobile framework: React Native with TypeScript.
+Android project: React Native Community CLI with the native Android project committed to Git.
+Android build: Gradle wrapper and a compatible JDK/Android SDK configured in GitHub Actions.
+Local database: SQLite, accessed through a maintained native SQLite integration supporting prepared statements, transactions, indexes, migrations, and appropriate native performance.
+Database encryption: SQLCipher or an equivalently maintained, verified encryption solution. Never claim the database is encrypted if it is not.
+State management: a lightweight, typed state management solution such as Zustand.
+Forms and validation: React Hook Form with a schema validation library such as Zod.
+Navigation: React Navigation.
+Sensitive secrets: Android Keystore-backed secure storage, using a maintained native integration.
+Printing: native Android Bluetooth/USB/network printing integration as supported by the device and selected printer.
+Testing: unit tests, database integration tests, inventory/accounting tests, and React Native component tests.
+Build automation: GitHub Actions using a committed Gradle wrapper and pinned, compatible toolchain versions.
+
+Choose maintained dependencies with compatible licenses and Android support. Avoid unnecessary libraries, excessive abstraction, giant UI frameworks, and dependencies that require a permanent network connection.
+
+The installed app must not contain mandatory analytics, advertisements, tracking, cloud authentication, or background network synchronization.
+
+3. Offline-first architecture
+
+The local database is the source of truth.
+
+All core operations must work in airplane mode, including:
+
+Opening the app and dashboard.
+Creating, editing, searching, and viewing products.
+Recording purchases and purchase returns.
+Making sales and printing or previewing bills.
+Recording cash, digital, credit, and partial payments.
+Customer and supplier profiles.
+Customer and supplier khata ledgers.
+Inventory adjustments and stock counts.
+Low-stock tracking and restock planning.
+Daily expenses and cash closing.
+Reports and exports.
+PIN management, settings, backups, and restoration.
+Accessing historical invoices and transaction details.
+
+Never silently discard a transaction because a device loses connectivity.
+
+Do not use a remote database as a fallback or dependency. The app should not require registration, an internet connection, or a server to start.
+
+Separate business logic, database access, UI, printing, and backup services into well-defined modules. Keep UI components independent from SQL implementation details.
+
+Provide a database migration system with schema versions, transaction-safe upgrades, and backup-before-risky-migration safeguards.
+
+4. App navigation and main modules
+
+Create a polished mobile interface with a bottom navigation bar for the most frequently used areas, plus a drawer or settings menu for secondary features.
+
+Primary navigation:
+
+Dashboard
+POS / Sale
+Products
+More
+
+Inside More, include:
+
+Purchases
+Sales history
+Suppliers
+Customers
+Customer khata
+Supplier ledger
+Stock adjustment
+Restock needed
+Expenses
+Cash closing
+Reports
+Barcode tools
+Returns and exchanges
+Backup and restore
+Settings
+Help and about
+
+Keep the POS accessible within one tap. Provide prominent quick actions for daily use.
+
+All screens must have complete loading, empty, success, validation-error, and failure states. Never use dead buttons or placeholder screens as the final implementation.
+
+5. Dashboard
+
+Build a configurable dashboard showing useful business statistics for today, with date filters where applicable.
+
+KPI cards:
+
+Today's gross sales.
+Net sales after discounts and returns.
+Cash received.
+Digital payments received.
+Credit sales.
+Outstanding customer balances.
+Today's purchases.
+Supplier payments.
+Today's expenses.
+Gross profit estimate.
+Net operating profit estimate, with clearly stated exclusions.
+Total stock quantity or stock value, with the valuation method stated.
+Low-stock products.
+Out-of-stock products.
+Unpaid customer balances.
+Unpaid supplier balances.
+Cash expected in the drawer.
+Last cash closing status.
+
+Include:
+
+Today's sales trend.
+Frequently sold products.
+Top-selling products by quantity and value.
+Low-stock and restock alerts.
+Recent sales and purchases.
+Recent expenses.
+Quick actions for New Sale, Add Product, Purchase, Add Customer, Add Supplier, Expense, Stock Adjustment, and Cash Closing.
+
+Calculations must come from actual database records and reconcile with the underlying ledgers. Do not insert fake statistics.
+
+Allow date selection and store configuration to affect dashboard calculations.
+
+6. Product management
+
+Provide a fast product list with:
+
+Search by English name.
+Search by Urdu name.
+Search by SKU.
+Search by barcode.
+Search by product code and supported aliases.
+Category and brand filters.
+Supplier filter.
+Stock-status filter.
+Active/inactive filter.
+Stock quantity, unit, selling price, cost, and stock status.
+Sort by name, stock, price, recent activity, and sales performance.
+Add, view, edit, archive, and restore products.
+Bulk import and export.
+Product detail screen with stock movements, purchases, sales, returns, and profit history.
+
+Search must handle Urdu text properly. Support Unicode, Urdu text normalization where appropriate, and practical partial matching. Never corrupt stored Urdu characters.
+
+Product creation form
+
+Include:
+
+English product name.
+Urdu product name.
+SKU or internal product code.
+Barcode and optional additional barcodes.
+Category and optional brand.
+Base inventory unit.
+Purchase units and conversion factors.
+Selling units and conversion factors.
+Selling price.
+Purchase cost information.
+Minimum stock threshold.
+Preferred supplier.
+Optional product image.
+Active/inactive status.
+Notes.
+Optional expiry date and batch tracking.
+Optional tax configuration, disabled by default until configured.
+
+Support the following units, while allowing custom units:
+
+Weight:
+
+Kilogram (kg)
+Gram (g)
+Milligram (mg), if needed
+
+Volume:
+
+Liter (L)
+Milliliter (ml)
+
+Count:
+
+Piece
+Packet
+Bottle
+Can
+Pet/PET bottle
+Dozen
+
+Packaging:
+
+Box
+Carton
+Bag
+Sack
+Bundle
+Pack
+Tray
+Crate
+
+Also allow custom units such as tin, jar, roll, and other locally used units.
+
+Do not treat units with different physical dimensions as interchangeable. Kilograms and liters must not be converted into each other without an explicitly defined product-specific conversion.
+
+Critical inventory unit and packaging engine
+
+Implement a robust unit-conversion engine. This is a core requirement, not an optional feature.
+
+Use a canonical stock quantity per product, expressed in the smallest practical supported base unit. Use exact decimal arithmetic or scaled integer quantities wherever appropriate. Do not use ordinary binary floating-point arithmetic for financial calculations.
+
+Each product must support:
+
+One base stock unit.
+Multiple purchase units.
+Multiple sale units.
+Independent conversion factors.
+Configurable decimal precision.
+Fractional purchase quantities.
+Fractional sale quantities where physically meaningful.
+Correct stock conversion regardless of which unit was used in a transaction.
+
+A packaging hierarchy must support multiple levels.
+
+Example A: Sugar or flour
+
+Base unit: kg.
+Base selling price: PKR 150 per kg.
+Upper unit: bag.
+One bag contains 10 kg.
+Calculated selling price per bag: PKR 1,500.
+Purchase cost per bag: PKR 1,200.
+Calculated purchase cost per kg: PKR 120.
+Estimated gross profit per full bag, before other costs: PKR 300.
+
+The product form should let the user set the selling price per kg and calculate the bag price automatically. It must also let the user record purchases by bag, kg, or mixed quantities.
+
+Example B: Selling partial quantities
+
+If the customer buys 500 g of sugar:
+
+Quantity sold: 500 g.
+Canonical stock deducted: 0.5 kg.
+Sale price: PKR 75 at the configured PKR 150/kg price.
+Bill displays the correct unit and amount.
+
+Also support 100 g, 250 g, 750 g, 1.25 kg, and other valid quantities.
+
+Example C: Pieces, boxes, and cartons
+
+Base unit: piece.
+Selling price per piece: PKR 20.
+One box contains 6 pieces.
+One carton contains 20 boxes.
+One carton therefore contains 120 pieces.
+Selling price per box: PKR 120.
+Selling price per carton: PKR 2,400.
+Purchase cost can be entered per carton, box, or piece.
+
+The product form must let the user define both box and carton packaging independently, including their conversion factors.
+
+Example D: Mixed purchase quantities
+
+A purchase can contain:
+
+4 cartons.
+10 boxes.
+4 individual pieces.
+
+For the above product, the total is 4 × 120 + 10 × 6 + 4 = 544 pieces.
+
+The system must record 544 pieces in stock and preserve the quantities and prices entered on the original purchase.
+
+Example E: Partial packages and mixed stock
+
+Allow purchases such as:
+
+4 bags and 4 kg.
+2.5 bags.
+3 cartons, 2 boxes, and 5 pieces.
+Any valid combination of configured purchase units.
+
+Do not force a purchase into whole bags or cartons.
+
+Price and cost handling
+
+Maintain separate values for:
+
+Current base-unit selling price.
+Derived selling prices for other units.
+Purchase unit price.
+Effective purchase cost per canonical unit.
+Historical purchase cost.
+Stock valuation cost.
+Weighted-average cost or another explicitly selected costing method.
+
+Derived selling prices should be calculated automatically from the configured base selling price and conversion factor, with rounding rules stated and applied consistently. Allow an authorized manager to override a derived price if desired.
+
+Do not overwrite historical transaction prices when a product's current price changes.
+
+A new purchase may change the current cost estimate, but it must not silently change the selling price unless the manager explicitly enables a price-update rule.
+
+When a purchase is recorded by bag or carton, calculate its effective base-unit cost and show the expected margin and gross profit at current selling prices.
+
+For example, if a 10 kg bag costs PKR 1,200 and the selling price is PKR 150/kg, show:
+
+Purchase cost per kg: PKR 120.
+Selling value per full bag: PKR 1,500.
+Estimated gross profit per full bag: PKR 300.
+Estimated gross margin: 20%.
+
+Distinguish gross margin from markup. Label estimated profit correctly and do not represent it as final net profit.
+
+Stock integrity
+
+Every stock-changing operation must generate an auditable stock movement.
+
+Maintain a transaction history containing:
+
+Product.
+Quantity and original unit.
+Canonical quantity delta.
+Transaction type.
+Source document.
+Date and time.
+Unit cost when applicable.
+User or operator.
+Reason.
+Reversal or reference information.
+
+Do not permit negative stock by default. Provide an explicit manager-controlled setting if negative stock is required.
+
+When a transaction fails, roll back every associated database change. Prevent double deduction from duplicate taps, retries, or repeated document submission.
+
+7. Point of Sale (POS)
+
+Build a fast, touch-friendly POS optimized for one-handed operation on a phone.
+
+Product selection
+
+Allow the operator to:
+
+Search products by English or Urdu name.
+Scan barcodes when supported.
+Browse categories.
+Select a product.
+Select the selling unit.
+Enter a quantity.
+Enter decimal quantities when valid.
+See the unit price and calculated line total immediately.
+Add the item to the cart.
+Change quantity or unit.
+Remove items.
+Apply a line-level discount if permitted.
+View available stock.
+Review subtotal, discounts, tax if enabled, and total.
+
+Support a cart with many items without making the screen sluggish.
+
+Cart and bill review
+
+Display:
+
+Product name.
+Unit and quantity.
+Unit price.
+Line discount.
+Line total.
+Subtotal.
+Overall discount.
+Tax, if configured.
+Grand total.
+Amount received.
+Remaining balance.
+Change due, when applicable.
+
+Support percentage discounts and fixed-amount discounts, with manager-controlled limits and optional authorization for excessive discounts.
+
+Prevent invalid discounts, negative totals, and unintended duplicate bill creation.
+
+Customers and walk-in sales
+
+Provide a walk-in customer option for anonymous retail sales.
+
+Allow the cashier to search existing customers or add a new customer without unnecessarily leaving the POS.
+
+Walk-in sales must be payable immediately using configured payment methods. Do not allow anonymous credit by default.
+
+For registered customers, support:
+
+Cash sale.
+Digital payment.
+Credit sale.
+Partial payment.
+Split payments across multiple methods.
+Previous outstanding balance.
+Available customer credit limit, if enabled.
+Customer purchase history.
+Previous invoices.
+Customer khata balance.
+
+Allow a customer to pay part of the bill and carry the remaining balance as a receivable.
+
+Payment methods
+
+Support configurable methods such as:
+
+Cash.
+Bank transfer.
+Debit/credit card.
+Mobile wallet.
+Raast or other locally configured digital methods.
+Other custom payment methods.
+Credit, only when customer-credit rules permit it.
+
+The app must record a declared digital payment as a payment record, not claim that a bank transfer was verified by an external provider.
+
+For split payments, preserve each method and amount separately.
+
+Completing a sale
+
+On confirmation, atomically:
+
+Create the sale and invoice number.
+Save invoice line items and transaction-time prices.
+Record stock movements.
+Record payment allocations.
+Update customer receivables, if any.
+Record cash movement, where applicable.
+Update cost-of-goods-sold and profit records according to the configured costing method.
+Commit the transaction.
+Generate the bill preview and offer printing or sharing/export.
+
+If any essential step fails, do not leave a partially recorded sale.
+
+Use immutable transaction records and controlled reversals for completed sales.
+
+8. Bills, receipts, and printing
+
+Support configurable invoice layouts for 58 mm and 80 mm thermal printers, plus an A4 invoice or report layout where useful.
+
+Provide:
+
+Store name in English and Urdu.
+Store address and contact information.
+Invoice number.
+Date and time.
+Cashier name or ID.
+Customer information.
+Product names.
+Quantity and unit.
+Unit prices.
+Line totals.
+Discounts.
+Taxes, if enabled.
+Subtotal and grand total.
+Payment breakdown.
+Paid amount.
+Remaining credit.
+Previous balance and amount due, when appropriate.
+Thank-you message.
+Return/exchange policy.
+Custom terms and conditions printed at the bottom of the bill.
+
+Allow the manager to edit the terms and conditions in Settings, choose the language, control font size, and preview the receipt before printing.
+
+Support print preview even when no printer is connected.
+
+Provide printer setup and troubleshooting. Use compatible native Android printing integration for supported Bluetooth or USB thermal printers. Network printing may be supported where appropriate.
+
+Do not claim every printer is compatible without testing it.
+
+Provide reprinting of historical invoices with a clear "Duplicate" or "Reprint" indication. Reprinting must never create another sale or deduct stock again.
+
+9. Sales history, returns, and exchanges
+
+Include a searchable sales list with filters for:
+
+Date range.
+Invoice number.
+Customer.
+Cashier.
+Payment method.
+Sale status.
+Amount range.
+Outstanding balance.
+
+Open an invoice to see all details, payments, and stock movements.
+
+Support full and partial returns.
+
+For returns:
+
+Reference the original invoice where available.
+Select returned lines and quantities.
+Calculate the refund or credit adjustment.
+Restore eligible stock.
+Record damaged or unsellable returned goods separately.
+Reverse the relevant sales and profit calculations.
+Adjust the customer receivable or payable appropriately.
+Record any cash or digital refund separately.
+Preserve the original invoice and audit history.
+
+Support exchanges as linked return and new-sale documents.
+
+Never erase a completed sale to process a return.
+
+10. Purchase management
+
+Create purchase documents with:
+
+Supplier selection or creation.
+Supplier invoice/reference number.
+Purchase date.
+Due date, if applicable.
+Product search and selection.
+Multiple product lines.
+Purchase unit selection.
+Decimal quantities.
+Unit cost.
+Line discounts.
+Overall discount.
+Freight and additional costs, where supported.
+Tax, if configured.
+Total amount.
+Amount paid.
+Outstanding supplier balance.
+Payment method.
+Notes and attachment reference, if supported.
+
+Support purchases in mixed units, such as 4 bags plus 4 kg or 3 cartons plus 2 boxes plus 5 pieces.
+
+On purchase confirmation, update stock, stock movement records, purchase documents, and supplier balances atomically.
+
+Support:
+
+Paid purchases.
+Credit purchases.
+Partial payments.
+Multiple payments against one purchase.
+Supplier advances.
+Purchase returns.
+Cancelled or reversed purchases through audited correction flows.
+Historical purchase prices.
+Product cost updates.
+Purchase invoice preview and printing.
+
+The purchase entry screen must display the effective cost per base unit and expected profit at the current selling price.
+
+11. Suppliers
+
+Each supplier profile should contain:
+
+English name.
+Urdu name, if applicable.
+Supplier code.
+Phone number.
+WhatsApp number, optional.
+Address.
+Contact person.
+Opening balance.
+Credit terms.
+Notes.
+Active/inactive status.
+
+Supplier detail tabs:
+
+Overview.
+Purchases.
+Payments.
+Returns.
+Khata/ledger.
+Outstanding balance.
+Statements and reports.
+
+Show purchase history, individual bill details, payment history, running balance, and printable supplier statements.
+
+Provide supplier search, filtering, sorting, and export.
+
+12. Customers
+
+Each customer profile should contain:
+
+English name.
+Urdu name, if applicable.
+Customer code.
+Phone number.
+Optional WhatsApp number.
+Address.
+Opening balance.
+Optional credit limit.
+Optional credit period or due date.
+Notes.
+Active/inactive status.
+
+Customer detail tabs:
+
+Overview.
+Sales and invoices.
+Payments received.
+Returns and credit notes.
+Khata/ledger.
+Outstanding balance.
+Statements and reports.
+
+Show previous purchases, bill previews, payments, returns, outstanding amounts, and running balances.
+
+Allow a payment to be received against an existing balance without creating a new sale.
+
+13. Customer khata and supplier ledger
+
+Build proper financial ledgers rather than a manually editable balance field.
+
+For customers, record:
+
+Opening receivable or credit balance.
+Credit sales.
+Payments received.
+Returns and credit notes.
+Debit/credit adjustments.
+Running balance.
+Due dates, if applicable.
+
+For suppliers, record:
+
+Opening payable or advance balance.
+Credit purchases.
+Payments made.
+Purchase returns.
+Debit/credit adjustments.
+Running balance.
+Due dates, if applicable.
+
+Every entry must reference its source document where possible.
+
+Use a documented sign convention and show clearly whether the balance represents money owed by the customer or owed to the supplier.
+
+Provide date filters, statements, printable ledgers, and exports.
+
+Do not allow a user to directly edit a calculated running balance. Corrections must be entered as authorized adjustment transactions with a reason and audit record.
+
+Support opening balances during setup and controlled reconciliation.
+
+14. Stock adjustment and stock counts
+
+Provide a dedicated Stock Adjustment screen.
+
+Allow the manager to select:
+
+Adjustment date.
+Supplier, where the adjustment represents received stock from a supplier.
+Product lines.
+Purchase unit and quantity.
+Unit cost.
+Selling price update, if authorized.
+Reason.
+Notes.
+Reference document.
+
+Support multiple products in one adjustment.
+
+Distinguish between:
+
+Stock received from a supplier.
+Opening stock.
+Physical stock count correction.
+Damaged or expired stock.
+Wastage.
+Found stock.
+Internal correction.
+Supplier return.
+
+A supplier stock receipt that has a purchase cost and creates an amount payable must be recorded as a purchase or an explicitly linked receipt document. Do not create stock and supplier debt inconsistently.
+
+For physical stock counts, show system quantity, counted quantity, difference, and financial impact.
+
+Require a reason for every adjustment. Record who performed it and when.
+
+15. Restock needed and inventory alerts
+
+Provide a dedicated restock module.
+
+Support:
+
+Configurable minimum stock per product.
+Optional maximum stock.
+Optional target stock.
+Reorder quantity.
+Supplier preference.
+Current stock.
+Reserved or committed stock, if that feature is enabled.
+Estimated demand from historical sales.
+Suggested restock quantity.
+Estimated purchase cost.
+Supplier-based grouping.
+
+Allow the manager to manually select any product, modify the suggested quantity, select a supplier, and turn the selection into a draft purchase.
+
+Support unit conversion for the suggested order, such as 2 bags plus 5 kg.
+
+Show low-stock, out-of-stock, and optionally overstocked products.
+
+Demand forecasting is optional and must be clearly labelled as an estimate. Do not require internet access.
+
+16. Daily expenses
+
+Create an expense management module with:
+
+Expense category.
+Description.
+Amount.
+Date and time.
+Payment method.
+Paid-from account or cash drawer.
+Optional supplier/payee.
+Reference number.
+Notes.
+Optional attachment reference.
+Recurring expense template, if enabled.
+Created-by and edit audit trail.
+
+Default categories should include rent, electricity, gas, salaries, transport, packaging, repairs, internet, cleaning, and miscellaneous expenses. Allow custom categories.
+
+Distinguish cash expenses from non-cash expenses.
+
+Allow editing only according to role and status, using an audit trail and correction transactions when necessary.
+
+Expenses must affect cash reconciliation when paid from the drawer and profit reports according to their accounting treatment.
+
+17. Cash management and cash closing
+
+Implement a cash drawer ledger.
+
+Track:
+
+Opening cash.
+Cash sales.
+Customer cash payments.
+Supplier cash payments.
+Cash purchases.
+Cash expenses.
+Cash refunds.
+Owner cash added.
+Owner cash withdrawn.
+Other authorized cash movements.
+Expected closing cash.
+Actual counted cash.
+Cash shortage or overage.
+Closing notes.
+Closed-by and closing timestamp.
+
+Use the formula:
+
+Expected closing cash = opening cash + cash inflows − cash outflows.
+
+Digital transactions must not be counted as physical drawer cash.
+
+The cash-closing screen must display the calculation and allow the operator to enter the actual counted amount. Record the difference without silently modifying the ledger.
+
+Support daily closing reports, date-based history, reprints, and manager-authorized correction workflows.
+
+After a shift or day is closed, prevent unauthorized edits to closed records. If corrections are necessary, record them as audited adjustments.
+
+If multiple shifts are supported, associate cash movements and sales with the appropriate shift.
+
+18. Reports and analytics
+
+Implement a dedicated Reports module with meaningful date filters and export functionality.
+
+Global filters where relevant:
+
+Today.
+Yesterday.
+This week.
+This month.
+Custom date range.
+Product.
+Category.
+Customer.
+Supplier.
+Cashier.
+Payment method.
+Transaction status.
+Amount range.
+Store or shift, if supported.
+
+Reports must include:
+
+Sales reports
+Daily, weekly, monthly, and custom-period sales.
+Gross sales.
+Discounts.
+Returns.
+Net sales.
+Sales by product.
+Sales by category.
+Sales by unit.
+Sales by customer.
+Sales by cashier.
+Sales by payment method.
+Average bill value.
+Best-selling and slow-moving products.
+Purchase reports
+Purchases by date.
+Purchases by supplier.
+Purchases by product.
+Purchase returns.
+Paid and unpaid purchases.
+Supplier payment history.
+Inventory reports
+Current stock.
+Stock valuation.
+Stock movement history.
+Stock adjustments.
+Low-stock items.
+Out-of-stock items.
+Damaged and expired stock, where tracking is enabled.
+Batch and expiry reports, where tracking is enabled.
+Inventory differences.
+Financial reports
+Gross profit.
+Estimated operating profit.
+Expenses by category.
+Cash flow.
+Cash closing differences.
+Customer receivables.
+Supplier payables.
+Customer and supplier statements.
+Outstanding balances.
+Payments received and made.
+Discount reports.
+Refund reports.
+Profit calculation rules
+
+Use transaction-time prices and the selected cost valuation method.
+
+Gross profit should be calculated from net sales less the corresponding cost of goods sold, adjusted appropriately for returns and discounts.
+
+Operating profit should additionally account for recorded operating expenses, with all assumptions clearly documented.
+
+Do not calculate profit as sales minus today's purchases. Purchases may remain in stock and must not automatically be treated as goods sold.
+
+Show the costing method used and ensure that historical profit is not recalculated incorrectly when current product prices change.
+
+Exporting
+
+Allow filtered reports to be exported to CSV and print-friendly PDF, with Excel-compatible output where practical.
+
+Exports must preserve Urdu and English text. Use appropriate UTF-8 encoding and verify Urdu rendering in PDF exports.
+
+For very large reports, generate exports in batches without loading the entire dataset into memory.
+
+19. Settings
+
+Organize settings into clear sections.
+
+Store profile
+Store name in English and Urdu.
+Logo, if configured.
+Address.
+Phone.
+WhatsApp.
+Currency: default PKR.
+Currency display.
+Date and time format.
+Language.
+Time zone.
+Invoice prefix and numbering.
+Receipt footer.
+Return policy.
+Terms and conditions.
+Default customer.
+Default payment method.
+Product and inventory
+Default units.
+Custom unit definitions.
+Decimal quantity precision.
+Stock valuation method.
+Negative-stock policy.
+Low-stock defaults.
+Barcode settings.
+Product code generation.
+Expiry tracking.
+Batch tracking.
+Price-rounding rules.
+POS and billing
+Receipt format.
+Default printer.
+Receipt font size.
+Discount permissions and limits.
+Tax settings, disabled by default.
+Walk-in credit policy.
+Invoice number format.
+Reprint settings.
+Terms and conditions.
+Security
+Enable/disable PIN lock, subject to secure recovery policy.
+Change PIN.
+Auto-lock timeout.
+Failed-attempt policy.
+Recovery questions.
+Operator management.
+Permissions.
+Audit log.
+Backup encryption.
+App privacy settings.
+Backup and restore
+Create backup.
+Restore backup.
+Backup history.
+Backup validation.
+Encrypted backup option.
+Export destination.
+Last successful backup.
+Automatic local reminder for backups.
+Optional scheduled backup where Android permits it reliably.
+Other settings
+Language and appearance.
+Urdu/English layout direction.
+Printer management.
+Data import/export.
+About and version information.
+Privacy information.
+Help and troubleshooting.
+Database integrity check.
+
+Do not show settings that are not actually implemented as though they work.
+
+20. PIN security and automatic app lock
+
+Security is a mandatory feature.
+
+On first launch, require the manager to set a PIN before accessing business data.
+
+Requirements:
+
+Support a configurable numeric PIN of a sensible minimum length.
+Store a salted, computationally expensive PIN verifier using an appropriate password-hashing algorithm, not a plaintext PIN or reversible PIN.
+Never log or export the PIN.
+Unlock the app after correct verification.
+Automatically lock after configurable inactivity intervals such as 30 seconds, 1 minute, 5 minutes, 10 minutes, 15 minutes, or never, if explicitly allowed by the security policy.
+Default to a sensible secure timeout.
+Also lock when the app returns from the background after the configured timeout.
+Reset the inactivity timer on appropriate user interaction.
+Obscure sensitive content when the app is backgrounded, where supported.
+Rate-limit failed PIN attempts and apply an appropriate increasing delay.
+Do not lock or terminate an in-progress database transaction halfway through.
+Require reauthentication for sensitive manager actions where configured.
+PIN change and recovery
+
+Changing the PIN must require the current PIN.
+
+For forgotten-PIN recovery, support a secure recovery flow based on recovery questions selected from a list, if the manager enables that method.
+
+At setup, let the manager select multiple questions and provide answers. Store normalized answer verifiers securely, not plaintext answers. Do not display the saved answers later.
+
+Possible questions:
+
+What was the name of your first school?
+What was the name of your first teacher?
+What was the name of your childhood best friend?
+In which city were you born?
+What was the name of your first pet?
+What was the name of a memorable childhood place?
+What was the name of your favourite childhood game?
+What was a memorable gift you received as a child?
+What was the name of your favourite childhood book?
+What was a memorable family holiday destination?
+
+Allow custom questions as well.
+
+Require more than one recovery answer, enforce attempt limits, and do not reveal whether a specific answer was correct before the full recovery attempt is validated.
+
+Important security policy: recovery questions are weaker than strong authentication. Warn the manager about this risk and offer an alternative recovery method, such as a securely generated recovery code stored outside the device.
+
+If PIN recovery cannot be completed, offer a carefully explained reset process that does not silently erase business data. Any destructive reset must require explicit confirmation and a warning about backup and data loss.
+
+Do not create a hidden master PIN, universal bypass PIN, hardcoded recovery PIN, or plaintext secret.
+
+Protect sensitive data using Android Keystore-backed encryption where applicable. If SQLCipher is used, design encryption-key creation, storage, backup, restoration, and recovery carefully. Never promise recovery of an encrypted database if the only encryption key has been irretrievably lost.
+
+21. Language, Urdu, and accessibility
+
+Provide English and Urdu throughout the app.
+
+Requirements:
+
+All user-facing labels must be translatable.
+Urdu names must display correctly.
+Use appropriate Urdu fonts and text shaping.
+Support right-to-left layouts where appropriate.
+Support left-to-right English layouts.
+Handle mixed Urdu and English product names.
+Ensure currency values, phone numbers, invoice numbers, and quantities remain readable in RTL screens.
+Allow a language switch without losing data.
+Print receipts in a configurable language or mixed-language format.
+Keep layouts usable on small screens.
+Provide adequate touch targets and readable typography.
+Do not hardcode visible labels throughout the application.
+
+The default currency should be PKR, with configurable formatting.
+
+22. Database architecture and data integrity
+
+Design a normalized relational schema with suitable indexes and explicit relationships.
+
+Expected entities include:
+
+Store settings.
+Operators/users and roles.
+Products.
+Product aliases and barcodes.
+Categories and brands.
+Unit definitions.
+Product unit conversions.
+Suppliers.
+Customers.
+Purchase documents and lines.
+Sales documents and lines.
+Payment records and allocations.
+Customer ledger entries.
+Supplier ledger entries.
+Stock movement entries.
+Inventory adjustments.
+Returns and exchanges.
+Expenses and categories.
+Cash drawers and shifts.
+Cash movements.
+Cash closings.
+Stock count documents.
+Restock lists.
+Invoice sequences.
+Audit events.
+Backup metadata.
+Optional product batches and expiry records.
+
+You may adapt table names and split entities as needed, but document the final schema and relationships.
+
+Requirements:
+
+Use foreign keys and appropriate constraints.
+Use parameterized SQL statements.
+Add indexes for frequent filters and joins.
+Use database transactions for related writes.
+Use unique identifiers that remain valid across exports and restores.
+Use transaction-safe invoice numbering.
+Store dates in a consistent, sortable representation.
+Preserve original transaction values.
+Record created-at and updated-at timestamps where appropriate.
+Keep immutable financial and stock movement history.
+Use controlled reversal transactions rather than deleting finalized documents.
+Validate data at both UI and database/business-logic boundaries.
+Run database integrity checks during diagnostics and restore validation.
+Avoid N+1 query patterns.
+Never load all products or transactions into memory for a list screen.
+
+Use exact decimal arithmetic or scaled integers for money and fractional quantities, with explicit precision and rounding rules. Document the selected representation and enforce it consistently.
+
+23. Performance and large datasets
+
+The app must be designed for large, long-lived stores and growing databases.
+
+Do not promise that one Android phone can practically hold and smoothly process hundreds of millions of complete transactional records under every device and storage configuration. Instead, engineer for scalability, bounded memory usage, and measurable performance.
+
+Requirements:
+
+SQLite indexes designed around actual query patterns.
+Keyset/cursor-based lazy loading for product lists and transaction histories.
+Infinite scrolling that loads more records as the user scrolls, rather than numbered pagination.
+Avoid offset-based pagination for deep datasets where it becomes expensive.
+Fetch only the fields needed by list views.
+Load details on demand.
+Debounce search input appropriately.
+Search English and Urdu names, codes, and barcodes efficiently.
+Use SQLite FTS5 or another compatible local full-text indexing strategy if appropriate and verified in the selected build.
+Use background processing for large imports, exports, and maintenance tasks where safe.
+Keep expensive calculations off the main UI thread.
+Batch bulk inserts in transactions.
+Avoid retaining entire transaction histories in JavaScript memory.
+Use bounded caches.
+Provide database maintenance and diagnostics.
+Measure list performance, search latency, database size, and memory usage.
+
+Infinite scrolling must still support efficient loading of older records without losing the user's position.
+
+Define a practical test dataset and stress-test plan. Include synthetic datasets of increasing sizes, for example 10,000, 100,000, and 1,000,000 records where feasible, then document further scaling limits based on actual measurements.
+
+Test realistic indexed queries, insert throughput, reporting, database maintenance, and backup performance.
+
+Do not falsely report a stress test as successful unless it was actually run.
+
+24. Backup, restoration, and data safety
+
+Implement reliable local backup and restore.
+
+Requirements:
+
+Create a consistent backup of the database.
+Include the necessary schema/version metadata.
+Validate backup integrity before reporting success.
+Restore from a selected backup with explicit confirmation.
+Validate the restored database.
+Prevent incomplete backup files from being treated as valid.
+Preserve the current database until a new restoration has been validated.
+Use a safe restore workflow with rollback or recovery protection.
+Include encryption for backups where configured.
+Explain the encryption-key recovery implications.
+Display backup date, size, and status.
+Allow exporting a backup to a user-accessible location.
+Allow importing a previously exported backup.
+Provide CSV exports for relevant business records where appropriate.
+
+Do not assume Android app-private storage alone is a safe backup. Device loss, app deletion, or hardware failure can destroy it.
+
+Clearly distinguish:
+
+Internal recovery backup.
+User-exported backup.
+Encrypted backup.
+
+The application must remain functional offline even when no external backup destination is available.
+
+If a backup or restore fails, show a clear error and preserve the existing valid database.
+
+25. Import and migration tools
+
+Provide optional CSV import for products, customers, suppliers, and opening stock.
+
+Requirements:
+
+Provide downloadable or exportable sample CSV templates.
+Validate rows before importing.
+Preview records and errors.
+Detect likely duplicates.
+Allow mapping of incoming columns.
+Preserve Urdu text.
+Support UTF-8.
+Provide a summary of successful, skipped, and failed rows.
+Use a transaction or controlled batches.
+Do not silently overwrite existing financial or stock history.
+Provide clear rollback or recovery options.
+
+Include a migration framework for future schema changes.
+
+26. Multi-user and permissions
+
+The initial release may operate as a single-device, single-store application, but structure the data model to support multiple operators.
+
+Provide optional operator profiles with roles such as:
+
+Owner/Manager.
+Cashier.
+Inventory operator.
+Accountant or report viewer.
+
+Implement permission checks in the business-logic layer, not only by hiding buttons.
+
+Examples:
+
+Cashier: create sales and view permitted invoices.
+Inventory operator: manage products and stock within granted permissions.
+Accountant: view reports and ledgers.
+Manager: approve discounts, adjustments, returns, and corrections.
+Owner: manage security, settings, backups, and user permissions.
+
+For the first release, do not claim real-time multi-device synchronization. That would require an additional synchronization architecture and conflict-resolution design. The initial product is an offline, local-first application on one device.
+
+27. Security and privacy
+No mandatory internet permission or network dependency unless a specifically justified feature requires it.
+Disable unnecessary Android cleartext traffic.
+Do not include API keys or credentials in the source code.
+Do not log sensitive customer, financial, PIN, or encryption-key data.
+Validate imported files and external inputs.
+Protect backup and restore operations.
+Apply least privilege to operator roles.
+Maintain an audit trail for sensitive operations.
+Explain the limits of local-device security.
+Do not claim that the app is invulnerable to a compromised or rooted device.
+Do not add advertising SDKs or unnecessary analytics.
+Do not silently upload data.
+
+If any feature requires internet access, clearly mark it optional, explain why, and ensure core store management continues working when offline.
+
+28. UI/UX design requirements
+
+Create a polished, modern, lightweight retail interface.
+
+Design principles:
+
+Clean layouts with restrained colors.
+High-contrast text and status indicators.
+Large touch targets.
+Minimal unnecessary animations.
+Fast startup.
+No excessive gradients, oversized illustrations, or heavy visual effects.
+Readable currency and quantity fields.
+Consistent forms, buttons, dialogs, and tables/lists.
+Responsive layout for different Android screen sizes.
+Light and dark themes if implemented reliably.
+Clear confirmation for destructive operations.
+Inline validation and useful error messages.
+Persistent draft handling for important forms where safe.
+Proper keyboard behavior and focus management.
+Urdu RTL and English LTR support.
+Smooth scrolling through large lists.
+Accessible controls and labels.
+
+Prioritize speed of completing a sale over decorative visuals.
+
+29. Automated testing and acceptance criteria
+
+Write automated tests for the core business rules before considering the app complete.
+
+Unit conversion tests
+
+Verify that:
+
+1 bag = 10 kg.
+4 bags + 4 kg = 44 kg.
+500 g = 0.5 kg.
+100 g = 0.1 kg.
+1 carton = 20 boxes.
+1 box = 6 pieces.
+1 carton = 120 pieces.
+4 cartons + 10 boxes + 4 pieces = 544 pieces.
+
+Verify fractional quantities, rounding, and invalid cross-dimension conversions.
+
+Pricing tests
+
+Given a 10 kg bag:
+
+Selling price = PKR 150/kg.
+Derived bag selling price = PKR 1,500.
+Purchase cost = PKR 1,200/bag.
+Cost per kg = PKR 120.
+Gross profit per bag at that selling price = PKR 300.
+Gross margin = 20%.
+
+Verify that changes to current prices do not alter historical invoice prices.
+
+POS tests
+
+Verify:
+
+Cash sale reduces stock correctly.
+A 500 g sale deducts 0.5 kg.
+Registered customer credit creates the correct receivable.
+Partial payment leaves the correct balance.
+Split payments reconcile to the total.
+Walk-in credit is blocked by default.
+Duplicate submission does not create duplicate invoices.
+Failed transactions roll back all related changes.
+Purchase tests
+
+Verify:
+
+Mixed-unit purchases update stock correctly.
+Supplier debt is accurate.
+Partial payments reduce outstanding balances correctly.
+Cost updates follow the configured valuation method.
+Purchase returns reverse the appropriate stock and ledger entries.
+Ledger tests
+
+Verify customer and supplier running balances after:
+
+Opening balance.
+Sale or purchase.
+Partial payment.
+Full payment.
+Return.
+Adjustment.
+Reversal.
+Cash tests
+
+Verify expected cash after cash sales, cash receipts, cash purchases, expenses, refunds, deposits, and withdrawals.
+
+Digital payments must not affect physical cash drawer totals.
+
+Other tests
+
+Test:
+
+Urdu/English search.
+RTL/LTR layouts.
+PIN timeout and recovery limits.
+Backup and restore.
+Database migrations.
+Export correctness.
+Large-list lazy loading.
+Report reconciliation.
+Role permissions.
+Printing preview.
+App restart and process interruption.
+
+Run tests and report the actual results. Never substitute a list of planned tests for test execution.
+
+30. GitHub repository and APK build pipeline
+
+I do not have Android Studio installed and do not want to use Expo cloud builds.
+
+Build the APK using GitHub Actions.
+
+Requirements:
+
+Commit all required React Native source files.
+Include the native Android project.
+Include the Gradle wrapper and required Gradle configuration.
+Document the supported Node.js, JDK, Gradle, Android SDK, and Android Gradle Plugin versions.
+Pin compatible versions where practical.
+Create a GitHub Actions workflow under .github/workflows/.
+Trigger builds on pushes, pull requests, and manual workflow dispatch as appropriate.
+Configure the workflow to install dependencies, run linting and tests, and build the Android APK.
+Use GitHub-hosted runners and their installed/configurable Android build tools.
+Do not require Android Studio on my computer.
+Do not use EAS or any Expo cloud build service.
+Upload the generated APK as a downloadable GitHub Actions artifact.
+Give the artifact a clear name, such as general-store-debug-apk.
+Include build logs and test results.
+Fail the workflow if the build or required tests fail.
+Do not fake a successful build.
+
+For development and testing, create a debug APK that I can install on my Android phone.
+
+Also document how to generate a release APK signed using a keystore provided through GitHub Actions secrets. Never commit the signing keystore, password, or signing credentials to Git.
+
+Explain the distinction between a debug APK and a release APK.
+
+If GitHub credentials are available, create or use the repository and push the code. If credentials are not available, prepare the complete Git-ready project and provide exact instructions for creating a GitHub repository, pushing the code, running the workflow, and downloading the APK.
+
+Do not claim to have pushed code, run a workflow, or generated an APK unless the operation actually succeeded.
+
+31. Development workflow and milestones
+
+Work in small, testable milestones.
+
+Milestone 1: Repository and architecture
+Inspect the environment and existing repository.
+Create the React Native TypeScript project.
+Set up the Android build.
+Configure Git and GitHub Actions.
+Verify a basic APK build as early as possible.
+Milestone 2: Database foundation
+Implement schema and migrations.
+Add settings, products, units, conversions, and database services.
+Test database transactions and indexing.
+Milestone 3: Inventory engine
+Implement base-unit stock storage.
+Implement packaging conversions.
+Implement cost and price calculations.
+Add stock movement records.
+Pass all unit conversion tests.
+Milestone 4: Purchasing and suppliers
+Implement supplier profiles, purchase documents, payments, and ledgers.
+Validate mixed-unit purchases and balances.
+Milestone 5: POS and customers
+Implement cart, discounts, payment allocation, customer selection, credit, and invoices.
+Pass POS and accounting tests.
+Milestone 6: Stock and financial operations
+Implement returns, stock adjustment, restock, expenses, cash movements, and cash closing.
+Milestone 7: Reports and printing
+Implement reports, filters, exports, receipt layouts, printer support, and historical invoice preview.
+Milestone 8: Security and backup
+Implement PIN lock, inactivity timeout, recovery, roles, backup, restore, and integrity validation.
+Milestone 9: Localization and optimization
+Implement Urdu and English, RTL/LTR support, performance tuning, and large-dataset testing.
+Milestone 10: Final verification
+Run all available automated tests.
+Build the APK.
+Verify that it installs and launches.
+Test core workflows offline.
+Verify backup and restoration.
+Check the GitHub Actions artifact.
+Document known limitations and remaining work.
+
+Maintain a PROJECT_STATUS.md file with completed, in-progress, blocked, and untested items.
+
+After each milestone, commit coherent changes with descriptive Git commit messages. Do not mark a milestone complete until its acceptance criteria have been verified.
+
+32. Required deliverables
+
+The final repository must contain:
+
+Complete React Native TypeScript source code.
+Native Android project and Gradle wrapper.
+Database schema and migrations.
+Unit conversion and inventory engine.
+POS, purchases, customers, suppliers, khata, expenses, cash closing, and reports.
+Urdu and English localization files.
+Security and backup implementation.
+Automated tests.
+GitHub Actions APK workflow.
+README.md with setup, build, installation, backup, and troubleshooting instructions.
+DATABASE_DESIGN.md describing tables, relationships, indexes, and transaction rules.
+ACCOUNTING_RULES.md documenting stock valuation, cost of goods sold, profit, returns, and ledger calculations.
+SECURITY.md explaining PIN recovery, encryption, backups, and security limitations.
+BUILD_APK.md with exact GitHub Actions instructions.
+PROJECT_STATUS.md showing actual completion and test status.
+A downloadable APK artifact generated by a successful workflow, when repository access and GitHub Actions are available.
+33. Definition of done
+
+The project is complete only when:
+
+The Android app builds successfully.
+The generated APK installs and launches on a supported Android device.
+The core application operates without internet access.
+Products support English and Urdu names.
+Unit conversions and mixed-unit stock calculations pass automated tests.
+Sales, purchases, customer credit, supplier debt, and cash balances reconcile correctly.
+Returns and adjustments preserve the audit trail.
+The POS can complete a sale and generate a bill.
+Reports use actual database data.
+Backup and restoration have been tested.
+PIN locking and recovery protections work as specified.
+Large lists use indexed, bounded, cursor-based loading.
+GitHub Actions generates a downloadable APK artifact.
+Documentation reflects the implementation that actually exists.
+All remaining limitations are disclosed honestly.
+34. Instructions for starting work now
+
+Begin by inspecting the current repository and available development tools.
+
+Then produce a concise architecture and milestone plan, identify any technical risks, and immediately proceed with implementation.
+
+Do not stop after providing recommendations, pseudocode, screenshots, mockups, or a project plan.
+
+Do not create the entire application as one giant component. Keep the code modular and testable.
+
+Do not skip core business logic to finish the UI more quickly.
+
+Do not use fake data to claim that reports or KPIs work.
+
+Do not silently substitute a cloud service for offline functionality.
+
+Do not claim unlimited database capacity or successful tests that were never performed.
+
+If a requested feature is technically infeasible with the selected dependencies, explain the limitation, choose the best compatible alternative, and continue without abandoning unrelated functionality.
+
+35. Android screen layout, system bars, keyboard, and responsive UI safety
+
+This is a mandatory requirement for every screen, dialog, form, menu, bottom sheet, and navigation component. No UI element may overlap Android system controls or become inaccessible because of screen size, keyboard visibility, system settings, or device orientation.
+
+A. Android system bars and safe areas
+Correctly handle the Android status bar at the top, including the time, battery, network indicators, and notification icons.
+Correctly handle the Android navigation area at the bottom, including gesture navigation, the Home gesture, Back gesture, and three-button navigation.
+Use appropriate safe-area handling and Android window insets for every screen.
+Support edge-to-edge Android layouts without allowing content to render underneath system bars unintentionally.
+Apply the correct top, bottom, left, and right insets dynamically rather than hardcoding padding for a particular phone.
+Account for display cutouts, notches, rounded corners, punch-hole cameras, and devices with different status-bar heights.
+Ensure the app's bottom navigation, floating action buttons, POS controls, and bottom sheets never overlap Android's navigation controls.
+Ensure the app toolbar and screen headings never overlap the status bar or notification icons.
+Handle light and dark system bars with suitable icon contrast and readable backgrounds.
+Correctly handle changes in system navigation mode, display size, font scaling, and orientation.
+Do not permanently hide Android system navigation or prevent users from accessing Home, Back, or other system functions.
+B. Keyboard-aware layouts
+
+Every form and input screen must work correctly when the Android keyboard opens, closes, or changes height.
+
+Use appropriate keyboard-aware scrolling, resize behavior, and window inset handling.
+Automatically keep the focused input visible above the keyboard.
+Allow users to scroll to fields hidden behind the keyboard.
+Ensure Save, Submit, Cancel, Confirm, and other essential buttons remain accessible when practical.
+Never position essential buttons at fixed screen coordinates that become covered by the keyboard.
+Avoid forms being compressed until labels, fields, or buttons overlap.
+Avoid the entire screen jumping unexpectedly when the keyboard appears.
+Prevent duplicate bottom padding when combining keyboard avoidance with system navigation insets.
+Dismiss the keyboard appropriately after submission, successful selection, or tapping outside an input when doing so will not cause data loss.
+Preserve form data when the keyboard opens, closes, or the screen scrolls.
+Use suitable keyboard types for numeric quantities, currency, phone numbers, search, and text fields.
+Support decimal quantities and decimal prices using an appropriate numeric keyboard, with a reliable alternative if the device keyboard does not provide a decimal separator.
+Ensure Urdu text inputs and English text inputs work correctly with supported keyboards.
+Ensure autocomplete suggestions, dropdown menus, product search results, and selection dialogs remain visible above the keyboard.
+
+Test these behaviors on the POS screen, product form, purchase form, customer and supplier forms, expense form, settings, PIN entry, and recovery screens.
+
+C. Automatic layout adaptation
+
+The UI must automatically adapt to:
+
+Small, medium, and large Android phones.
+Different screen resolutions and pixel densities.
+Portrait and landscape orientation, where supported.
+Display zoom and font-size accessibility settings.
+Android gesture navigation and three-button navigation.
+Different keyboard heights and input methods.
+English left-to-right and Urdu right-to-left layouts.
+Light and dark themes, if enabled.
+Split-screen or resizable windows, where supported.
+
+Use flexible layouts, appropriate minimum and maximum widths, responsive spacing, wrapping, and scroll containers.
+
+Avoid hardcoded screen widths, heights, and absolute positions for essential controls. Use fixed dimensions only where they are justified, such as a suitable touch target or a supported receipt layout.
+
+Long product names, Urdu text, large prices, decimal quantities, and long invoice numbers must wrap, truncate appropriately, or scroll without colliding with adjacent controls.
+
+Do not assume that every phone has the same screen dimensions or that the available height remains constant.
+
+D. Navigation and menu behavior
+The app's bottom navigation must remain separate from Android's system navigation area.
+Navigation labels and icons must not overlap or become clipped.
+Menus, dropdowns, popovers, and selection lists must remain inside the visible screen area.
+If there is insufficient space below a menu trigger, display the menu above it or reposition it appropriately.
+Dialogs and bottom sheets must respect system insets and keyboard visibility.
+Long menus must be scrollable.
+The Android Back button and Back gesture must behave predictably.
+Back navigation must dismiss the keyboard or close the active dialog/menu when appropriate before leaving the current screen.
+Warn about unsaved changes before discarding important forms.
+Prevent double navigation and duplicate submissions caused by repeated taps.
+Do not allow the app's navigation bar, a modal, or a keyboard to permanently obstruct an essential action.
+E. POS-specific layout safety
+
+The POS must remain usable on small screens while the keyboard is visible.
+
+Product search must remain accessible.
+Search results must scroll independently where appropriate.
+Cart items must not overlap totals, discounts, or payment controls.
+The checkout button must remain reachable.
+Payment fields must remain visible while entering amounts.
+Customer selection and credit-payment controls must not be obscured by the keyboard.
+The receipt preview must fit within the available screen or scroll vertically.
+The cart must not unexpectedly lose its contents when switching between customer selection, payment, and bill review.
+If the layout must adapt to a small screen, reorganize the content into scrollable sections rather than hiding essential controls.
+F. Automatic app lock and screen lifecycle
+The PIN auto-lock mechanism must coexist safely with keyboard visibility and screen transitions.
+Returning from the background must apply the configured lock policy without unexpectedly discarding an unfinished sale.
+Do not trigger auto-lock simply because the keyboard opens or the user scrolls.
+Do not reset the inactivity timer repeatedly due to background rendering or internal state updates.
+Preserve an unfinished transaction safely when the app is interrupted, subject to the configured security policy.
+Reauthenticate before showing protected information after the lock screen is activated.
+Never leave a modal, keyboard, or transparent overlay blocking the screen after unlocking.
+G. UI layout testing and acceptance criteria
+
+Test the application on at least the following configurations:
+
+A small Android phone in portrait orientation.
+A typical Android phone using gesture navigation.
+An Android phone using three-button navigation.
+A device with a display cutout or punch-hole camera.
+A device with increased display size or font scaling.
+English LTR mode and Urdu RTL mode.
+A form with the keyboard open and the last input field focused.
+The POS payment screen with the keyboard open.
+A long, scrollable product list and a long menu.
+A modal or bottom sheet displayed while the keyboard is visible.
+
+Where device testing is available, also test landscape orientation, keyboard changes, and background/foreground transitions.
+
+Use automated UI tests where feasible and physical-device testing for important system-bar and keyboard behaviors.
+
+Definition of done:
+
+No unintended overlap between app content and the status bar, notification area, Android navigation controls, or keyboard.
+No essential action button is permanently inaccessible on a supported screen configuration.
+No clipped or overlapping labels, fields, menus, dialogs, or navigation controls in the tested configurations.
+No loss of unsaved form data during ordinary keyboard or layout transitions.
+No duplicate transactions caused by repeated taps or navigation events.
+No unhandled layout regression when changing language, font size, display size, or navigation mode.
+
+Do not mark this section complete based only on screenshots from one emulator. Record the actual devices or configurations tested and document any remaining limitations.
+
+At every stage, prioritize correctness, offline reliability, data safety, and a genuinely installable Android APK.
+
+Start now.
+
