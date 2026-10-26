@@ -118,7 +118,8 @@ class PrinterBridgeModule(private val context: ReactApplicationContext) :
     @ReactMethod
     fun printText(text: String, fontSize: Int, jobName: String, promise: Promise) {
         try {
-            val activity = currentActivity ?: throw IllegalStateException("No activity")
+            // currentActivity lives on the ReactContext, not on the module.
+            val activity = context.currentActivity ?: throw IllegalStateException("No activity")
             val printManager = activity.getSystemService(Context.PRINT_SERVICE) as PrintManager
             val adapter = TextPrintAdapter(context, jobName, text, fontSize.toFloat())
             val attributes = PrintAttributes.Builder()

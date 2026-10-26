@@ -355,7 +355,8 @@ class SqliteBridgeModule(private val context: ReactApplicationContext) :
     @ReactMethod
     fun shareFile(path: String, promise: Promise) {
         try {
-            val activity = currentActivity ?: throw IllegalStateException("No activity")
+            // currentActivity lives on the ReactContext, not on the module.
+            val activity = context.currentActivity ?: throw IllegalStateException("No activity")
             val file = File(path)
             val uri = androidx.core.content.FileProvider.getUriForFile(
                 context,
