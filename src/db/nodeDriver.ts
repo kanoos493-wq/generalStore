@@ -20,7 +20,6 @@ interface NodeSqliteModule {
   DatabaseSync: new (path: string) => NodeDatabase;
 }
 
-/* eslint-disable @typescript-eslint/no-var-requires */
 declare const require: (moduleName: string) => unknown;
 const nodeSqlite = require('node:sqlite') as NodeSqliteModule;
 

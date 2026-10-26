@@ -11,7 +11,7 @@ import { BusinessError, NotFoundError, ValidationError } from '../core/errors';
 import { assertCan, type Actor } from '../core/permissions';
 import { mulDivRound, QTY_SCALE } from '../core/money';
 import { audit } from './auditService';
-import { ensureShift, isCashMethod, postCashMovement } from './cashService';
+import { ensureShift, postCashMovement } from './cashService';
 import { postLedger } from './ledgerService';
 import { loadPaymentMethod, postPayment } from './paymentService';
 import { loadSettings } from './settingsService';

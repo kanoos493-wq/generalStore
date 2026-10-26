@@ -9,7 +9,7 @@ import { newId } from '../core/ids';
 import { nowIso } from '../core/dates';
 import { BusinessError, NotFoundError, ValidationError } from '../core/errors';
 import { assertCan, type Actor } from '../core/permissions';
-import { mulDivRound, QTY_SCALE, sumMoney } from '../core/money';
+import { mulDivRound, QTY_SCALE } from '../core/money';
 import { costPerBaseUnit, lineTotal } from '../core/pricing';
 import { weightedAverageCost } from '../core/costing';
 import { allocateProportionally } from '../core/ledger';

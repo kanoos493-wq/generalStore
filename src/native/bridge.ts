@@ -57,7 +57,9 @@ export interface PrinterBridgeModule {
   printText(text: string, fontSize: number, jobName: string): Promise<boolean>;
 }
 
-const isTestEnv = typeof process !== 'undefined' && !!process.env?.JEST_WORKER_ID;
+const isTestEnv = !!(
+  globalThis as unknown as { process?: { env?: Record<string, string | undefined> } }
+).process?.env?.JEST_WORKER_ID;
 
 function moduleOrNull<T>(name: string): T | null {
   if (Platform.OS !== 'android' || isTestEnv) {return null;}
