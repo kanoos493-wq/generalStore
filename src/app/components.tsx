@@ -16,8 +16,18 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { colors, font, radius, spacing, touchTarget } from './theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, font, radius, spacing, touchTarget, motion } from './theme';
 import { useI18n } from './i18n';
+
+/**
+ * System-bar insets, read once here so no screen has to hardcode padding for
+ * a particular phone. `top` covers the status bar and any cutout; `bottom`
+ * covers gesture navigation as well as the three-button bar.
+ */
+export function useInsets() {
+  return useSafeAreaInsets();
+}
 
 export function useTextStyle(): TextStyle {
   const { rtl } = useI18n();
@@ -36,12 +46,16 @@ export function Screen(props: {
   footer?: ReactNode;
 }) {
   const { children, scroll, refreshing, onRefresh, padded = true, footer } = props;
+  const insets = useSafeAreaInsets();
+  const scrollStyle = [styles.scrollContent, padded && styles.padded];
   if (scroll) {
     return (
       <View style={styles.screen}>
         <ScrollView
-          contentContainerStyle={[styles.scrollContent, padded && styles.padded]}
+          contentContainerStyle={scrollStyle}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          style={{ paddingTop: insets.top }}
           refreshControl={
             onRefresh ? (
               <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -49,11 +63,25 @@ export function Screen(props: {
           }>
           {children}
         </ScrollView>
-        {footer}
+        {footer ? <View style={{ paddingBottom: insets.bottom }}>{footer}</View> : null}
       </View>
     );
   }
-  return <View style={[styles.screen, padded && styles.padded]}>{children}</View>;
+  return (
+    <View style={[styles.screen, padded && styles.padded, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      {children}
+    </View>
+  );
+}
+
+/** Fixed bottom action bar that stays above the Android navigation area. */
+export function BottomBar(props: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }, props.style]}>
+      {props.children}
+    </View>
+  );
 }
 
 export function Card(props: { children: ReactNode; style?: StyleProp<ViewStyle>; onPress?: () => void }) {
