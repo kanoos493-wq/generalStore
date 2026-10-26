@@ -57,14 +57,18 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: android-actions/setup-android@v3
 
       - name: Ensure required SDK packages
         run: |
+          # These must match android/build.gradle, which in turn mirrors
+          # node_modules/react-native/gradle/libs.versions.toml for RN 0.88:
+          # compileSdk 37, buildTools 37.0.0, targetSdk 36, NDK 27.1.12297006.
+          # The NDK is needed to strip the prebuilt native libraries.
           yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
+          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0" \
             "ndk;27.1.12297006" "cmake;3.22.1"
           sdkmanager --list_installed | head -40
 
@@ -123,14 +127,14 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - uses: android-actions/setup-android@v3
 
       - name: Ensure required SDK packages
         run: |
           yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" \
+          sdkmanager "platform-tools" "platforms;android-37" "build-tools;37.0.0" \
             "ndk;27.1.12297006" "cmake;3.22.1"
 
       - name: Decode signing keystore

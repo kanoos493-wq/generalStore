@@ -11,11 +11,11 @@ was produced here — the steps below are how the first real APK gets made.
 | Tool | Version | Where it comes from |
 | --- | --- | --- |
 | Node.js | 24 (project requires ≥ 22.11) | `actions/setup-node` |
-| JDK | Temurin **17** | `actions/setup-java` |
+| JDK | Temurin **21** | `actions/setup-java` |
 | Gradle | **9.4.1** | committed wrapper (`android/gradle/wrapper/`) |
 | Android Gradle Plugin | 9.x | React Native 0.88 gradle plugin (`node_modules/@react-native/gradle-plugin`) |
 | Kotlin | 2.2.0 | `android/build.gradle` |
-| compileSdk / buildTools | **36** / 36.0.0 | `android/build.gradle` |
+| compileSdk / buildTools | **37** / 37.0.0 | `android/build.gradle` (mirrors RN 0.88's `gradle/libs.versions.toml`) |
 | targetSdk | 36 | `android/build.gradle` |
 | minSdk | 24 (Android 7.0) | `android/build.gradle` |
 | NDK / CMake | 27.1.12297006 / 3.22.1 | installed by the workflow (`sdkmanager`) |
@@ -107,7 +107,7 @@ Both paths are git-ignored.
 
 ## 6. Building locally (if you ever install a JDK + SDK)
 
-Android Studio is not required; only a JDK 17 and the Android SDK command-line tools:
+Android Studio is not required; only a JDK 21 and the Android SDK command-line tools:
 
 ```bash
 npm ci
@@ -123,8 +123,8 @@ npm run android                 # install the debug build on a USB-connected pho
 | Symptom | Cause / fix |
 | --- | --- |
 | `SDK location not found` | No Android SDK on the machine. Use the GitHub Actions path, or create `android/local.properties`. |
-| `Unsupported class file major version` / Gradle JDK error | Wrong JDK. Use **17**; Gradle 9 does not accept 8/11 for AGP 9. |
-| `platforms;android-36 not found` | `sdkmanager --list` on the runner; the workflow installs it explicitly. Bump `compileSdk` only together with the `sdkmanager` line. |
+| `Unsupported class file major version` / Gradle JDK error | Wrong JDK. Use **21**; Gradle 9 and AGP 9 reject 8/11. |
+| `platforms;android-37 not found` | `sdkmanager --list` on the runner; the workflow installs it explicitly. Bump `compileSdk` only together with the `sdkmanager` line. |
 | `NDK not configured` / CMake error | The new architecture builds native code; the workflow installs NDK 27.1.12297006 and CMake 3.22.1. |
 | Metro “Unable to load script” | The JS bundle is missing from a debug build without Metro — use `npm run android:assemble` (bundles JS) or start Metro. |
 | Blank screen after launch | Check `adb logcat | grep -i react`; usually a missing native module registration (`GeneralStorePackage`). |
