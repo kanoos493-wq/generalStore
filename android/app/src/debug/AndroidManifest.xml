@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Debug only: Metro bundler needs loopback/network access to serve JS.
+         The release APK declares no INTERNET permission at all. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>
