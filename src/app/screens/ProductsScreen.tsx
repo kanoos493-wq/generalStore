@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Badge, Button, EmptyState, ErrorView, LoadingView, Pill } from '../components';
+import { Badge, Button, EmptyState, ErrorView, LoadingView, Pill, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -17,6 +17,7 @@ export default function ProductsScreen() {
   const navigation = useNavigation<Nav>();
   const db = useDb();
   const { t } = useI18n();
+  const insets = useInsets();
   const f = useFormat();
 
   const [query, setQuery] = useState('');
@@ -156,7 +157,7 @@ export default function ProductsScreen() {
         />
       )}
 
-      <Pressable style={styles.fab} onPress={() => navigation.navigate('ProductForm')}>
+      <Pressable style={[styles.fab, { bottom: spacing.lg + insets.bottom }]} onPress={() => navigation.navigate('ProductForm')}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
     </View>

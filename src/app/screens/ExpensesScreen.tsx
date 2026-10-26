@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Button, Card, EmptyState, ErrorView, Field, LoadingView, ModalSheet, Row, SelectField } from '../components';
+import { Button, Card, EmptyState, ErrorView, Field, LoadingView, ModalSheet, Row, SelectField, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -17,6 +17,7 @@ export default function ExpensesScreen() {
   const db = useDb();
   const actor = useActor();
   const { t } = useI18n();
+  const insets = useInsets();
   const f = useFormat();
   const [rows, setRows] = useState<Record<string, string | number | null>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +138,7 @@ export default function ExpensesScreen() {
         />
       )}
 
-      <Pressable style={styles.fab} onPress={() => setOpen(true)}>
+      <Pressable style={[styles.fab, { bottom: spacing.lg + insets.bottom }]} onPress={() => setOpen(true)}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
 

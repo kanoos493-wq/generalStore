@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { Card, Row, Screen, Section } from '../components';
+import { StyleSheet, Text, View } from 'react-native';
+import { BrandMark, Card, Row, Screen, Section } from '../components';
 import { colors, font, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useAppStore } from '../store/appStore';
@@ -37,6 +37,13 @@ export default function HelpScreen() {
   return (
     <Screen scroll>
       <Card>
+        <View style={styles.brandRow}>
+          <BrandMark size={56} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.brandName}>DukanDost</Text>
+            <Text style={styles.brandTag}>{ur ? 'دُکان دوست — آف لائن POS اور انوینٹری' : 'DukanDost — offline POS & inventory'}</Text>
+          </View>
+        </View>
         <Text style={styles.title}>{ur ? 'مدد اور معلومات' : 'Help & about'}</Text>
         <Text style={styles.sub}>{settings?.storeName ?? ''}</Text>
         <Row label="Version" value={VERSION} />
@@ -88,6 +95,9 @@ export default function HelpScreen() {
 }
 
 const styles = StyleSheet.create({
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+  brandName: { fontSize: font.xl, fontWeight: '800', color: colors.primary },
+  brandTag: { fontSize: font.xs, color: colors.muted, marginTop: 2 },
   title: { fontSize: font.lg, fontWeight: '800', color: colors.text },
   sub: { fontSize: font.sm, color: colors.muted, marginBottom: spacing.sm },
   point: { fontSize: font.sm, color: colors.text, marginBottom: spacing.sm, lineHeight: 20 },

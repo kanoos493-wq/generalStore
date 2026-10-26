@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Button, EmptyState, ErrorView, LoadingView } from '../components';
+import { Button, EmptyState, ErrorView, LoadingView, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -17,6 +17,7 @@ export default function AdjustmentsScreen() {
   const navigation = useNavigation<Nav>();
   const db = useDb();
   const { t } = useI18n();
+  const insets = useInsets();
   const f = useFormat();
   const state = useAsync(() => listAdjustments(db), []);
   const reload = state.reload;
@@ -55,7 +56,7 @@ export default function AdjustmentsScreen() {
           )}
         />
       )}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: spacing.md + insets.bottom }]}>
         <Button title={`+ ${t('stockAdjust')}`} onPress={() => navigation.navigate('AdjustmentForm')} />
       </View>
     </View>

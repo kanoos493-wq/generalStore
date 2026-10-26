@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Badge, Button, EmptyState, ErrorView, LoadingView, Pill } from '../components';
+import { Badge, Button, EmptyState, ErrorView, LoadingView, Pill, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -19,6 +19,7 @@ export default function PartyListScreen() {
   const route = useRoute<Route>();
   const db = useDb();
   const { t } = useI18n();
+  const insets = useInsets();
   const f = useFormat();
   const partyType = route.params.partyType;
 
@@ -130,7 +131,7 @@ export default function PartyListScreen() {
         />
       )}
 
-      <Pressable style={styles.fab} onPress={() => navigation.navigate('PartyForm', { partyType })}>
+      <Pressable style={[styles.fab, { bottom: spacing.lg + insets.bottom }]} onPress={() => navigation.navigate('PartyForm', { partyType })}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
     </View>

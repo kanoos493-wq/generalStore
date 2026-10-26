@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BrandMark } from '../components';
 import { colors, font, radius, spacing, touchTarget } from '../theme';
 import { useI18n } from '../i18n';
 import { pinManager, secureStorage, useAppStore } from '../store/appStore';
@@ -301,7 +302,9 @@ export default function LockScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
-          <Text style={styles.title}>{t('setupTitle')}</Text>
+          <BrandMark size={72} />
+        <Text style={styles.title}>DukanDost</Text>
+        <Text style={styles.title}>{t('setupTitle')}</Text>
           <Text style={styles.body}>{t('setupBody')}</Text>
           <Text style={styles.label}>{stage === 'pin' ? t('setPin') : t('confirmPin')}</Text>
           {renderPinDots(stage === 'pin' ? pin : confirm)}
@@ -354,6 +357,8 @@ export default function LockScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.center}>
+        <BrandMark size={88} />
+        <Text style={styles.title}>DukanDost</Text>
         <Text style={styles.title}>{t('enterPin')}</Text>
         {renderPinDots(pin)}
         {lockedFor > 0 ? (

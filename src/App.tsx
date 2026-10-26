@@ -31,6 +31,8 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      {/* Edge-to-edge: content draws behind the system bars and every screen
+          pads itself with useInsets(), so only icon contrast matters here. */}
       <StatusBar barStyle="dark-content" />
       <View style={styles.root} key={language}>
         {bootError ? (

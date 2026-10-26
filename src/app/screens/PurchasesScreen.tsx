@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Badge, Button, EmptyState, ErrorView, LoadingView } from '../components';
+import { Badge, Button, EmptyState, ErrorView, LoadingView, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -17,6 +17,7 @@ export default function PurchasesScreen() {
   const navigation = useNavigation<Nav>();
   const db = useDb();
   const { t } = useI18n();
+  const insets = useInsets();
   const f = useFormat();
   const [rows, setRows] = useState<(PurchaseRow & { line_count: number })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +75,7 @@ export default function PurchasesScreen() {
           </Pressable>
         )}
       />
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: spacing.md + insets.bottom }]}>
         <Button title={`+ ${t('newPurchase')}`} onPress={() => navigation.navigate('PurchaseForm')} />
       </View>
     </View>

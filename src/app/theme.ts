@@ -36,3 +36,19 @@ export const font = {
 };
 
 export const touchTarget = 48;
+
+/**
+ * Motion tokens. Everything animated in the app uses these durations and
+ * curves so transitions feel like one system, and every animation is gated on
+ * the OS "remove animations" accessibility setting.
+ */
+export const motion = {
+  /** Standard duration for transitions and feedback. */
+  duration: 180,
+  /** Slightly longer for larger surfaces such as sheets. */
+  durationSlow: 260,
+  /** Transform distance used when a sheet or card slides in. */
+  slideDistance: 12,
+  /** cubic-bezier(0.2, 0, 0, 1) — quick out, settled landing. */
+  ease: [0.2, 0, 0, 1] as const,
+};

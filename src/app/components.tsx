@@ -1,6 +1,7 @@
 /** Shared UI primitives: everything the screens are built from. */
-import React, { type ReactNode } from 'react';
+import React, { useEffect, useState, type ReactNode } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   FlatList,
   Modal,
@@ -17,7 +18,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, font, radius, spacing, touchTarget, motion } from './theme';
+import { colors, font, radius, spacing, touchTarget } from './theme';
 import { useI18n } from './i18n';
 
 /**
@@ -27,6 +28,73 @@ import { useI18n } from './i18n';
  */
 export function useInsets() {
   return useSafeAreaInsets();
+}
+
+/**
+ * The DukanDost mark, drawn with plain views so it stays crisp at any size and
+ * matches the launcher icon and splash screen (assets/branding/logo.svg).
+ */
+export function BrandMark(props: { size?: number }) {
+  const size = props.size ?? 96;
+  const basketH = size * 0.3;
+  return (
+    <View
+      accessibilityRole="image"
+      accessibilityLabel="DukanDost"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size * 0.22,
+        backgroundColor: colors.primary,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      {/* handle */}
+      <View
+        style={{
+          width: size * 0.28,
+          height: size * 0.16,
+          borderTopLeftRadius: size * 0.14,
+          borderTopRightRadius: size * 0.14,
+          borderWidth: size * 0.035,
+          borderBottomWidth: 0,
+          borderColor: colors.onPrimary,
+        }}
+      />
+      {/* body */}
+      <View
+        style={{
+          width: size * 0.42,
+          height: basketH,
+          marginTop: -size * 0.02,
+          backgroundColor: colors.onPrimary,
+          borderRadius: size * 0.03,
+          alignItems: 'center',
+          justifyContent: 'space-evenly',
+          paddingHorizontal: size * 0.06,
+        }}>
+        <View style={{ width: '100%', height: size * 0.035, backgroundColor: colors.primary, borderRadius: size * 0.017 }} />
+        <View style={{ width: '100%', height: size * 0.035, backgroundColor: colors.primary, borderRadius: size * 0.017 }} />
+      </View>
+    </View>
+  );
+}
+
+/** True when the user asked Android to remove/reduce animations. */
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(enabled => { if (mounted) {setReduced(!!enabled);}})
+      .catch(() => undefined);
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', enabled => setReduced(!!enabled));
+    return () => {
+      mounted = false;
+      sub.remove();
+    };
+  }, []);
+  return reduced;
 }
 
 export function useTextStyle(): TextStyle {
@@ -55,7 +123,7 @@ export function Screen(props: {
           contentContainerStyle={scrollStyle}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          style={{ paddingTop: insets.top }}
+          style={{ flex: 1, paddingTop: insets.top }}
           refreshControl={
             onRefresh ? (
               <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
@@ -369,17 +437,26 @@ export function ErrorView(props: { message: string; onRetry?: () => void }) {
 }
 
 export function ModalSheet(props: { visible: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
+  const insets = useSafeAreaInsets();
+  const reduced = useReducedMotion();
   return (
-    <Modal visible={props.visible} transparent animationType="slide" onRequestClose={props.onClose}>
+    <Modal
+      visible={props.visible}
+      transparent
+      animationType={reduced ? 'none' : 'slide'}
+      onRequestClose={props.onClose}>
       <View style={styles.modalBackdrop}>
-        <View style={styles.modalSheet}>
+        <View style={[styles.modalSheet, { paddingBottom: insets.bottom }]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{props.title}</Text>
-            <Pressable onPress={props.onClose} hitSlop={12}>
+            <Pressable onPress={props.onClose} hitSlop={12} accessibilityRole="button" accessibilityLabel="Close">
               <Text style={{ fontSize: font.lg, color: colors.muted }}>✕</Text>
             </Pressable>
           </View>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: spacing.md }}>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={{ paddingBottom: spacing.md }}>
             {props.children}
           </ScrollView>
           {props.footer}
@@ -481,6 +558,16 @@ export function Bars(props: { data: { label: string; value: number }[]; format: 
 }
 
 const styles = StyleSheet.create({
+  bottomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.card,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
   screen: { flex: 1, backgroundColor: colors.bg },
   scrollContent: { paddingBottom: spacing.xxl },
   padded: { padding: spacing.md },

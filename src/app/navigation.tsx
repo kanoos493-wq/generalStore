@@ -3,6 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 import { NavigationContainer, useNavigationState } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font } from './theme';
 import { useI18n } from './i18n';
 import { useAppStore } from './store/appStore';
@@ -51,6 +52,7 @@ const tabIcons = {
 
 function Tabs() {
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -58,7 +60,13 @@ function Tabs() {
         headerTitleStyle: { fontSize: font.md, fontWeight: '800', color: colors.text },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { height: 60, paddingBottom: 6, paddingTop: 4 },
+        // Grow with the system navigation area so labels are never clipped by
+        // gesture nav or the three-button bar.
+        tabBarStyle: {
+          height: 56 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 6),
+          paddingTop: 4,
+        },
         tabBarLabelStyle: { fontSize: font.xs, fontWeight: '700' },
       }}>
       <Tab.Screen

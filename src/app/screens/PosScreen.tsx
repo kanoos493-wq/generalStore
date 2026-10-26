@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Button, Card, EmptyState, Field, ModalSheet, Row, SelectField, LoadingView } from '../components';
+import { Button, Card, EmptyState, Field, ModalSheet, Row, SelectField, LoadingView, useInsets } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -31,6 +31,7 @@ export default function PosScreen() {
   const { t } = useI18n();
   const f = useFormat();
   const cart = useCart();
+  const insets = useInsets();
   const totals = useMemo(() => cartTotals(cart), [cart]);
 
   const [mode, setMode] = useState<Mode>('browse');
@@ -254,7 +255,7 @@ export default function PosScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top + spacing.md }]}>
         <View style={styles.modeSwitch}>
           <Pressable style={[styles.modeTab, mode === 'browse' && styles.modeTabActive]} onPress={() => setMode('browse')}>
             <Text style={[styles.modeText, mode === 'browse' && styles.modeTextActive]}>{t('products')}</Text>
@@ -449,7 +450,22 @@ export default function PosScreen() {
       </ModalSheet>
 
       {/* checkout */}
-      <ModalSheet visible={checkout} onClose={() => setCheckout(false)} title={`${t('checkout')} · ${f.moneyPlain(totals.totalPaisa)}`}>
+      <ModalSheet
+        visible={checkout}
+        onClose={() => setCheckout(false)}
+        title={`${t('checkout')} · ${f.moneyPlain(totals.totalPaisa)}`}
+        footer={
+          // Pinned outside the scroll area so the keyboard can never hide it.
+          <View style={{ gap: spacing.sm }}>
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+            <Button
+              title={saving ? t('saving') : t('completeSale')}
+              onPress={completeSale}
+              loading={saving}
+              disabled={remaining > 0 && !cart.customerId}
+            />
+          </View>
+        }>
         <Card>
           <Row label={t('total')} value={f.money(totals.totalPaisa)} bold />
           <Row label={t('discount')} value={f.moneyPlain(totals.lineDiscountPaisa + totals.cartDiscountPaisa)} />
@@ -512,13 +528,6 @@ export default function PosScreen() {
           <Row label={t('changeDue')} value={f.moneyPlain(-remaining)} tone="success" />
         ) : null}
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button
-          title={saving ? t('saving') : t('completeSale')}
-          onPress={completeSale}
-          loading={saving}
-          disabled={remaining > 0 && !cart.customerId}
-        />
       </ModalSheet>
 
       {/* receipt */}
