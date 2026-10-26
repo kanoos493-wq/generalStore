@@ -4,7 +4,7 @@ export type Language = 'en' | 'ur';
 type Entry = { en: string; ur: string };
 
 const S: Record<string, Entry> = {
-  appName: { en: 'General Store', ur: 'جنرل اسٹور' },
+  appName: { en: 'DukanDost', ur: 'دکان دوست' },
   dashboard: { en: 'Dashboard', ur: 'ڈیش بورڈ' },
   pos: { en: 'Sale', ur: 'فروخت' },
   products: { en: 'Products', ur: 'مصنوعات' },

@@ -1,7 +1,8 @@
-# General Store — Offline POS & Inventory for Pakistani shops
+# DukanDost — Offline POS & Inventory for Pakistani shops
 
-A complete, offline-first Android application (React Native + TypeScript) for a general
-store / kiryana store / mini-mart in Pakistan: products with Urdu names, a mixed-unit
+**DukanDost** (دکان دوست, "the shop's friend") is a complete, offline-first Android
+application (React Native + TypeScript) for a general store / kiryana store / mini-mart in
+Pakistan: products with Urdu names, a mixed-unit
 packaging engine, POS with credit and split payments, purchases, supplier and customer
 khata ledgers, stock adjustments, expenses, cash closing, reports, backup/restore and PIN
 security.
