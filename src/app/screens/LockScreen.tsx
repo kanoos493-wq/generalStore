@@ -23,7 +23,7 @@ interface AttemptState {
 }
 
 export default function LockScreen() {
-  const { t, rtl } = useI18n();
+  const { t } = useI18n();
   const needsSetup = useAppStore(s => s.needsSetup);
   const unlockApp = useAppStore(s => s.unlock);
   const completeSetup = useAppStore(s => s.completeSetup);
@@ -67,12 +67,12 @@ export default function LockScreen() {
     await secureStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setPin('');
     setConfirm('');
     setStage('pin');
     setError(null);
-  };
+  }, []);
 
   const submitUnlock = useCallback(
     async (entered: string) => {

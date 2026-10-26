@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Button, Card, EmptyState, ErrorView, Field, LoadingView, Row, Screen, Section } from '../components';
-import { colors, font, spacing } from '../theme';
+import { colors, font } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
 import { useAsync } from '../useAsync';

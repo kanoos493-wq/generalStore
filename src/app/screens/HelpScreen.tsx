@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { Card, Row, Screen, Section } from '../components';
 import { colors, font, spacing } from '../theme';
 import { useI18n } from '../i18n';

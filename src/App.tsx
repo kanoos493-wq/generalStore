@@ -31,7 +31,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.card} />
+      <StatusBar barStyle="dark-content" />
       <View style={styles.root} key={language}>
         {bootError ? (
           <ErrorView message={bootError} onRetry={() => void initialize()} />

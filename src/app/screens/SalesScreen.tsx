@@ -107,7 +107,7 @@ export default function SalesScreen() {
           onEndReached={() => !done && !loadingMore && load(false)}
           onEndReachedThreshold={0.4}
           ListEmptyComponent={<EmptyState message={t('empty')} />}
-          ListFooterComponent={loadingMore ? <LoadingView /> : null}
+          ListFooterComponent={loadingMore ? <LoadingView /> : undefined}
           renderItem={({ item }) => (
             <Pressable style={styles.row} onPress={() => navigation.navigate('SaleDetail', { saleId: item.id })}>
               <View style={{ flex: 1 }}>

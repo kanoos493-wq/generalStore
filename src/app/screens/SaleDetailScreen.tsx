@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useRoute, type RouteProp } from '@react-navigation/native';
 import { Badge, Button, Card, ErrorView, Field, LoadingView, ModalSheet, Row, Screen, Section, SelectField } from '../components';
 import { colors, font, radius, spacing } from '../theme';
 import { useI18n } from '../i18n';
@@ -13,17 +12,15 @@ import { createSaleReturn } from '../../services/returnService';
 import { paymentMethods } from '../../services/paymentService';
 import { buildReceipt } from '../../services/receiptService';
 import { printerBridge } from '../../native/bridge';
-import { formatQty, parseQty, QTY_SCALE } from '../../core/money';
+import { formatQty, parseQty } from '../../core/money';
 import { messageOf } from '../../core/errors';
 import { can } from '../../core/permissions';
 import type { RootStackParamList } from '../navigationTypes';
 import type { SaleLineRow } from '../../db/types';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Route = RouteProp<RootStackParamList, 'SaleDetail'>;
 
 export default function SaleDetailScreen() {
-  const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const db = useDb();
   const actor = useActor();
@@ -267,7 +264,7 @@ export default function SaleDetailScreen() {
         <SelectField
           label={t('refund')}
           value={refundMethod}
-          options={[{ value: '', label: t('creditNote') }, ...methods.map(m => ({ value: m.id, label: m.name_en }))]}
+          options={[{ value: '', label: t('creditNote') }, ...methods.map(m => ({ value: m.id, label: m.label }))]}
           onChange={setRefundMethod}
         />
         <Field label={t('reason')} value={reason} onChangeText={setReason} />

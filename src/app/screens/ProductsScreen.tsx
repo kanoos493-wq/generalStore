@@ -125,7 +125,7 @@ export default function ProductsScreen() {
               action={<Button title={t('addProduct')} onPress={() => navigation.navigate('ProductForm')} />}
             />
           }
-          ListFooterComponent={loadingMore ? <LoadingView /> : null}
+          ListFooterComponent={loadingMore ? <LoadingView /> : undefined}
           renderItem={({ item }) => {
             const out = Number(item.stock_micro) <= 0;
             const low = !out && Number(item.stock_micro) <= Number(item.min_stock_micro);

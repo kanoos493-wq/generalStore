@@ -42,6 +42,13 @@ function TabIcon({ glyph, focused }: { glyph: string; focused: boolean }) {
   return <Text style={[styles.tabIcon, focused && { color: colors.primary }]}>{glyph}</Text>;
 }
 
+const tabIcons = {
+  dashboard: ({ focused }: { focused: boolean }) => <TabIcon glyph="⌂" focused={focused} />,
+  pos: ({ focused }: { focused: boolean }) => <TabIcon glyph="🛒" focused={focused} />,
+  products: ({ focused }: { focused: boolean }) => <TabIcon glyph="▤" focused={focused} />,
+  more: ({ focused }: { focused: boolean }) => <TabIcon glyph="☰" focused={focused} />,
+};
+
 function Tabs() {
   const { t } = useI18n();
   return (
@@ -59,7 +66,7 @@ function Tabs() {
         component={DashboardScreen}
         options={{
           title: t('dashboard'),
-          tabBarIcon: ({ focused }) => <TabIcon glyph="⌂" focused={focused} />,
+          tabBarIcon: tabIcons.dashboard,
         }}
       />
       <Tab.Screen
@@ -68,7 +75,7 @@ function Tabs() {
         options={{
           title: t('pos'),
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabIcon glyph="🛒" focused={focused} />,
+          tabBarIcon: tabIcons.pos,
         }}
       />
       <Tab.Screen
@@ -76,7 +83,7 @@ function Tabs() {
         component={ProductsScreen}
         options={{
           title: t('products'),
-          tabBarIcon: ({ focused }) => <TabIcon glyph="▤" focused={focused} />,
+          tabBarIcon: tabIcons.products,
         }}
       />
       <Tab.Screen
@@ -84,7 +91,7 @@ function Tabs() {
         component={MoreScreen}
         options={{
           title: t('more'),
-          tabBarIcon: ({ focused }) => <TabIcon glyph="☰" focused={focused} />,
+          tabBarIcon: tabIcons.more,
         }}
       />
     </Tab.Navigator>

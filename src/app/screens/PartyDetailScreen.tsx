@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Badge, Button, Card, ErrorView, Field, LoadingView, ModalSheet, Row, Screen, Section, SelectField, TabPills } from '../components';
+import { Badge, Button, Card, ErrorView, Field, LoadingView, ModalSheet, Row, Screen, SelectField, TabPills } from '../components';
 import { colors, font, spacing } from '../theme';
 import { useI18n } from '../i18n';
 import { useFormat } from '../format';
@@ -51,7 +51,8 @@ export default function PartyDetailScreen() {
   if (state.loading && !state.data) {return <LoadingView />;}
   if (state.error) {return <ErrorView message={state.error} onRetry={state.reload} />;}
   if (!state.data) {return <LoadingView />;}
-  const { party, ledger, payments, docs, totals, statement } = state.data;
+  const { detail, statement } = state.data;
+  const { party, ledger, payments, docs, totals } = detail;
   const balance = Number(party.balance_paisa);
   const canPay = can(actor.role, 'payment.record');
 
