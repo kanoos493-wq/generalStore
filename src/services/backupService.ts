@@ -21,6 +21,7 @@ export interface BackupTarget {
   delete(path: string): Promise<void>;
   verify(path: string): Promise<{ ok: boolean; integrity: string; schemaVersion: number }>;
   restore(path: string): Promise<void>;
+  share(path: string): Promise<void>;
 }
 
 export interface BackupRecord {
@@ -41,10 +42,12 @@ export async function createBackup(
 ): Promise<BackupRecord> {
   assertCan(input.actor.role, 'backup.manage');
   const stamp = `${toDateKey(new Date())}-${new Date().toTimeString().slice(0, 8).replace(/:/g, '')}`;
-  const name = `generalstore-${stamp}${input.encrypt ? '.gsdb.enc' : '.gsdb'}`;
+  // Backups taken in the same second must not overwrite each other.
+  const id = newId('bak');
+  const suffix = id.slice(-6);
+  const name = `generalstore-${stamp}-${suffix}${input.encrypt ? '.gsdb.enc' : '.gsdb'}`;
   const result = await target.create(name, input.encrypt);
   const schemaVersion = await db.schemaVersion();
-  const id = newId('bak');
   await db.tx(async tx => {
     await tx.exec(
       `INSERT INTO backups (id, created_at, path, size_bytes, encrypted, schema_version, checksum, status, notes)
