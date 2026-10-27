@@ -7,6 +7,7 @@ import { attachAppStateListener, useAppStore } from './app/store/appStore';
 import LockScreen from './app/screens/LockScreen';
 import SetupWizardScreen from './app/screens/SetupWizardScreen';
 import Navigation from './app/navigation';
+import ErrorBoundary from './app/ErrorBoundary';
 import { useI18n } from './app/i18n';
 
 export default function App() {
@@ -41,19 +42,24 @@ export default function App() {
         with a PIN gets the lock screen, and everything else goes straight in.
         The language key sits on the navigator only, so switching language in
         the wizard re-lays-out the app without wiping the wizard's own state.
+
+        ErrorBoundary wraps the whole switch: without it a single render error
+        anywhere unmounts the tree and the app process dies (self-close).
       */}
       <View style={styles.root}>
-        {bootError ? (
-          <ErrorView message={bootError} onRetry={() => void initialize()} />
-        ) : !ready ? (
-          <LoadingView />
-        ) : needsSetup ? (
-          <SetupWizardScreen />
-        ) : locked ? (
-          <LockScreen />
-        ) : (
-          <Navigation key={language} />
-        )}
+        <ErrorBoundary>
+          {bootError ? (
+            <ErrorView message={bootError} onRetry={() => void initialize()} />
+          ) : !ready ? (
+            <LoadingView />
+          ) : needsSetup ? (
+            <SetupWizardScreen />
+          ) : locked ? (
+            <LockScreen />
+          ) : (
+            <Navigation key={language} />
+          )}
+        </ErrorBoundary>
       </View>
     </SafeAreaProvider>
   );
