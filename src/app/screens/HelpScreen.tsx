@@ -6,7 +6,7 @@ import { useI18n } from '../i18n';
 import { useAppStore } from '../store/appStore';
 import { LATEST_SCHEMA_VERSION } from '../../db/schema';
 
-const VERSION = '1.0.1';
+const VERSION = '1.0.2';
 
 export default function HelpScreen() {
   const { lang } = useI18n();

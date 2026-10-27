@@ -19,6 +19,11 @@ module.exports = {
       preset: '@react-native/jest-preset',
       testMatch: ['<rootDir>/__tests__/ui/**/*.test.tsx'],
       setupFiles: ['<rootDir>/__tests__/ui/setup.ts'],
+      // The navigation libraries ship ESM only, so they must be transformed
+      // for the shell tests that mount the real navigator.
+      transformIgnorePatterns: [
+        'node_modules/(?!(?:jest-)?react-native|@react-native(-community)?|@react-navigation|react-native-screens|react-native-safe-area-context|react-freeze|use-latest-callback|zustand|@noble)',
+      ],
     },
   ],
   collectCoverageFrom: ['src/core/**/*.ts', 'src/services/**/*.ts', 'src/db/**/*.ts'],

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { NavigationContainer, useNavigationState } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -109,7 +109,6 @@ function Tabs() {
 export default function Navigation() {
   const { t } = useI18n();
   const noteActivity = useAppStore(s => s.noteActivity);
-  useNavigationState(() => null);
 
   return (
     <NavigationContainer
