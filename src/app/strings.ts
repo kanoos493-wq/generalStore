@@ -65,6 +65,11 @@ const S: Record<string, Entry> = {
   empty: { en: 'Nothing here yet', ur: 'ابھی کچھ نہیں' },
   error: { en: 'Something went wrong', ur: 'کچھ غلط ہو گیا' },
   retry: { en: 'Retry', ur: 'دوبارہ کوشش' },
+  // toast feedback
+  toastSaved: { en: 'Saved', ur: 'محفوظ ہو گیا' },
+  toastUpdated: { en: 'Updated', ur: 'تازہ کاری ہو گئی' },
+  toastAdded: { en: 'Added', ur: 'شامل ہو گیا' },
+  toastDeleted: { en: 'Deleted', ur: 'حذف ہو گیا' },
   required: { en: 'Required', ur: 'لازمی' },
   optional: { en: 'Optional', ur: 'اختیاری' },
   print: { en: 'Print', ur: 'پرنٹ' },
@@ -82,6 +87,7 @@ const S: Record<string, Entry> = {
   // dashboard
   grossSales: { en: 'Gross sales', ur: 'کل فروخت' },
   netSales: { en: 'Net sales', ur: 'خالص فروخت' },
+  salesTrend: { en: 'Sales trend', ur: 'فروخت کا رجحان' },
   cashReceived: { en: 'Cash received', ur: 'نقد وصول' },
   digitalReceived: { en: 'Digital received', ur: 'ڈیجیٹل وصول' },
   creditSales: { en: 'Credit sales', ur: 'ادھار فروخت' },

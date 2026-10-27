@@ -11,6 +11,7 @@ import { createProduct, productDetail, suggestedFactor, updateProduct, type Prod
 import { parseMoney, parseQty, MONEY_SCALE } from '../../core/money';
 import { deriveUnitPrice, marginPreview } from '../../core/pricing';
 import { messageOf } from '../../core/errors';
+import { showToast } from '../toast';
 import type { RootStackParamList } from '../navigationTypes';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -154,6 +155,7 @@ export default function ProductFormScreen() {
           actor,
         });
       }
+      showToast(productId ? t('toastUpdated') : t('toastSaved'));
       navigation.goBack();
     } catch (e) {
       setError(messageOf(e));

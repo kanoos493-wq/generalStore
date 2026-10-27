@@ -11,6 +11,7 @@ import { ADJUSTMENT_TYPES, createAdjustment, type AdjustmentType } from '../../s
 import { listProducts } from '../../services/productService';
 import { parseMoney, parseQty } from '../../core/money';
 import { messageOf } from '../../core/errors';
+import { showToast } from '../toast';
 import type { ProductRow } from '../../db/types';
 import type { RootStackParamList } from '../navigationTypes';
 
@@ -82,6 +83,7 @@ export default function AdjustmentFormScreen() {
         unitCostPaisa: parseMoney(line.costText || '0'),
       }));
       await createAdjustment(db, { type, reason, notes: notes || null, lines: payload, actor });
+      showToast(t('toastAdded'));
       navigation.goBack();
     } catch (e) {
       setError(messageOf(e));

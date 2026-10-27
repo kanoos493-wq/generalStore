@@ -128,12 +128,13 @@ describe('native entropy pool', () => {
       });
       expect(await primeRandomSource()).toBe(true);
 
-      const record = createPinRecord('4827', undefined, fast);
+      const record = await createPinRecord('4827', undefined, fast);
       expect(record.salt).toHaveLength(32);
-      expect(verifyPin('4827', record)).toBe(true);
-      expect(verifyPin('4828', record)).toBe(false);
+      expect(await verifyPin('4827', record)).toBe(true);
+      expect(await verifyPin('4828', record)).toBe(false);
       // A second PIN gets a different salt from the pool.
-      expect(createPinRecord('5731', undefined, fast).salt).not.toBe(record.salt);
+      const second = await createPinRecord('5731', undefined, fast);
+      expect(second.salt).not.toBe(record.salt);
     } finally {
       restoreCrypto();
     }

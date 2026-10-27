@@ -79,7 +79,9 @@ describe('app shell after setup', () => {
     await bootAfterSetup();
     render(<Navigation />);
 
-    await waitFor(() => expect(screen.getByText('Gross sales')).toBeTruthy());
+    // 'Gross sales' intentionally appears in both the hero strip and the KPI
+    // grid, so assert presence rather than a unique match.
+    await waitFor(() => expect(screen.getAllByText('Gross sales').length).toBeGreaterThan(0));
     expect(screen.getByText('Expected cash')).toBeTruthy();
     expect(screen.getByText('Quick actions')).toBeTruthy();
   });

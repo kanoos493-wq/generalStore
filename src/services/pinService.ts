@@ -5,7 +5,7 @@
  * Android Keystore backed secure storage. Recovery answers are stored the same
  * way (normalised, salted, hashed) and are never echoed back to the UI.
  */
-import { scrypt } from '@noble/hashes/scrypt';
+import { scryptAsync } from '@noble/hashes/scrypt';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
 import { randomBytesSync } from '../core/random';
 
@@ -71,35 +71,40 @@ export function validatePinFormat(pin: string): void {
   }
 }
 
-function derive(secret: string, salt: string, params: ScryptParams): string {
-  return bytesToHex(scrypt(utf8ToBytes(secret), utf8ToBytes(salt), params));
+/**
+ * Runs scrypt asynchronously so the JS thread (and the whole UI) stays
+ * responsive on budget phones instead of freezing for the duration of the
+ * derivation. Same parameters, same result — only the scheduling differs.
+ */
+async function derive(secret: string, salt: string, params: ScryptParams): Promise<string> {
+  return bytesToHex(await scryptAsync(utf8ToBytes(secret), utf8ToBytes(salt), params));
 }
 
-export function createPinRecord(
+export async function createPinRecord(
   pin: string,
   recovery?: { questions: RecoveryAnswerInput[] },
   params: ScryptParams = DEFAULT_SCRYPT,
-): PinRecord {
+): Promise<PinRecord> {
   validatePinFormat(pin);
   const salt = bytesToHex(randomBytesSync(16));
   const record: PinRecord = {
     v: PIN_RECORD_VERSION,
     algo: 'scrypt',
     salt,
-    hash: derive(pin, salt, params),
+    hash: await derive(pin, salt, params),
     params,
     pinLength: pin.length,
     createdAt: new Date().toISOString(),
   };
   if (recovery && recovery.questions.length) {
-    record.recovery = createRecoveryRecord(recovery.questions, params);
+    record.recovery = await createRecoveryRecord(recovery.questions, params);
   }
   return record;
 }
 
-export function verifyPin(pin: string, record: PinRecord): boolean {
+export async function verifyPin(pin: string, record: PinRecord): Promise<boolean> {
   if (!record || !record.salt || !record.hash) {return false;}
-  const candidate = derive(pin, record.salt, record.params ?? DEFAULT_SCRYPT);
+  const candidate = await derive(pin, record.salt, record.params ?? DEFAULT_SCRYPT);
   return constantTimeEqual(candidate, record.hash);
 }
 
@@ -116,10 +121,10 @@ export function normalizeAnswer(answer: string): string {
     .replace(/\s+/g, ' ');
 }
 
-export function createRecoveryRecord(
+export async function createRecoveryRecord(
   questions: RecoveryAnswerInput[],
   params: ScryptParams = DEFAULT_SCRYPT,
-): RecoveryRecord {
+): Promise<RecoveryRecord> {
   if (questions.length < 2) {
     throw new PinPolicyError('Use at least two recovery questions');
   }
@@ -127,17 +132,19 @@ export function createRecoveryRecord(
     v: PIN_RECORD_VERSION,
     algo: 'scrypt',
     params,
-    questions: questions.map(q => {
-      const normalized = normalizeAnswer(q.answer);
-      if (normalized.length < 2) {throw new PinPolicyError('Recovery answers are too short');}
-      const salt = bytesToHex(randomBytesSync(16));
-      return {
-        id: q.id,
-        question: q.question,
-        salt,
-        hash: derive(normalized, salt, params),
-      };
-    }),
+    questions: await Promise.all(
+      questions.map(async q => {
+        const normalized = normalizeAnswer(q.answer);
+        if (normalized.length < 2) {throw new PinPolicyError('Recovery answers are too short');}
+        const salt = bytesToHex(randomBytesSync(16));
+        return {
+          id: q.id,
+          question: q.question,
+          salt,
+          hash: await derive(normalized, salt, params),
+        };
+      }),
+    ),
   };
 }
 
@@ -145,17 +152,17 @@ export function createRecoveryRecord(
  * Verifies every answer. Returns only a boolean so the UI can never reveal
  * which individual answer was wrong.
  */
-export function verifyRecovery(
+export async function verifyRecovery(
   answers: { id: string; answer: string }[],
   record: RecoveryRecord | undefined,
-): boolean {
+): Promise<boolean> {
   if (!record || !record.questions.length) {return false;}
   const byId = new Map(answers.map(a => [a.id, a.answer]));
   let ok = true;
   for (const q of record.questions) {
     const given = byId.get(q.id);
     if (given === undefined) {ok = false; continue;}
-    const candidate = derive(normalizeAnswer(given), q.salt, record.params ?? DEFAULT_SCRYPT);
+    const candidate = await derive(normalizeAnswer(given), q.salt, record.params ?? DEFAULT_SCRYPT);
     if (!constantTimeEqual(candidate, q.hash)) {ok = false;}
   }
   return ok;
@@ -246,7 +253,7 @@ export class PinManager {
   }
 
   async setPin(pin: string, recovery?: { questions: RecoveryAnswerInput[] }): Promise<PinRecord> {
-    const record = createPinRecord(pin, recovery);
+    const record = await createPinRecord(pin, recovery);
     await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify(record));
     return record;
   }
@@ -254,9 +261,9 @@ export class PinManager {
   async changePin(currentPin: string, newPin: string): Promise<void> {
     const record = await this.load();
     if (!record) {throw new PinPolicyError('No PIN is configured');}
-    if (!verifyPin(currentPin, record)) {throw new PinPolicyError('Current PIN is incorrect');}
+    if (!(await verifyPin(currentPin, record))) {throw new PinPolicyError('Current PIN is incorrect');}
     validatePinFormat(newPin);
-    const updated = createPinRecord(newPin, undefined, record.params);
+    const updated = await createPinRecord(newPin, undefined, record.params);
     updated.recovery = record.recovery;
     await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify(updated));
   }
@@ -268,7 +275,7 @@ export class PinManager {
   async setRecovery(questions: RecoveryAnswerInput[]): Promise<void> {
     const record = await this.load();
     if (!record) {throw new PinPolicyError('Set a PIN before adding recovery questions');}
-    const recovery = createRecoveryRecord(questions, record.params ?? DEFAULT_SCRYPT);
+    const recovery = await createRecoveryRecord(questions, record.params ?? DEFAULT_SCRYPT);
     await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify({ ...record, recovery }));
   }
 
@@ -276,7 +283,7 @@ export class PinManager {
   async disablePin(currentPin: string): Promise<void> {
     const record = await this.load();
     if (!record) {return;}
-    if (!verifyPin(currentPin, record)) {throw new PinPolicyError('Current PIN is incorrect');}
+    if (!(await verifyPin(currentPin, record))) {throw new PinPolicyError('Current PIN is incorrect');}
     await this.storage.removeItem(PIN_STORAGE_KEY);
     await this.storage.removeItem(ATTEMPT_STORAGE_KEY);
   }
@@ -295,9 +302,9 @@ export class PinManager {
   async recoverWithAnswers(answers: { id: string; answer: string }[], newPin: string): Promise<void> {
     const record = await this.load();
     if (!record?.recovery) {throw new PinPolicyError('Recovery is not configured');}
-    if (!verifyRecovery(answers, record.recovery)) {throw new PinPolicyError('Recovery answers are incorrect');}
+    if (!(await verifyRecovery(answers, record.recovery))) {throw new PinPolicyError('Recovery answers are incorrect');}
     validatePinFormat(newPin);
-    const updated = createPinRecord(newPin, undefined, record.params);
+    const updated = await createPinRecord(newPin, undefined, record.params);
     updated.recovery = record.recovery;
     await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify(updated));
   }

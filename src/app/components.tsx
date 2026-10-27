@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, font, radius, spacing, touchTarget } from './theme';
 import { useI18n } from './i18n';
+import { useKeyboardInset } from './keyboard';
 
 /**
  * System-bar insets, read once here so no screen has to hardcode padding for
@@ -115,7 +116,10 @@ export function Screen(props: {
 }) {
   const { children, scroll, refreshing, onRefresh, padded = true, footer } = props;
   const insets = useSafeAreaInsets();
-  const scrollStyle = [styles.scrollContent, padded && styles.padded];
+  // Edge-to-edge means the keyboard overlays the window; pad for the overlap so
+  // bottom content and the footer stay reachable while typing.
+  const kb = useKeyboardInset();
+  const scrollStyle = [styles.scrollContent, padded && styles.padded, kb > 0 && { paddingBottom: kb + spacing.xl }];
   if (scroll) {
     return (
       <View style={styles.screen}>
@@ -131,12 +135,19 @@ export function Screen(props: {
           }>
           {children}
         </ScrollView>
-        {footer ? <View style={{ paddingBottom: insets.bottom }}>{footer}</View> : null}
+        {footer ? (
+          <View style={{ paddingBottom: insets.bottom + kb }}>{footer}</View>
+        ) : null}
       </View>
     );
   }
   return (
-    <View style={[styles.screen, padded && styles.padded, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View
+      style={[
+        styles.screen,
+        padded && styles.padded,
+        { paddingTop: insets.top, paddingBottom: insets.bottom + kb },
+      ]}>
       {children}
     </View>
   );
@@ -145,8 +156,14 @@ export function Screen(props: {
 /** Fixed bottom action bar that stays above the Android navigation area. */
 export function BottomBar(props: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
   const insets = useSafeAreaInsets();
+  const kb = useKeyboardInset();
   return (
-    <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.sm) }, props.style]}>
+    <View
+      style={[
+        styles.bottomBar,
+        { paddingBottom: Math.max(insets.bottom, spacing.sm) + kb },
+        props.style,
+      ]}>
       {props.children}
     </View>
   );
@@ -409,7 +426,12 @@ export function Row(props: { label: string; value: string; bold?: boolean; tone?
   );
 }
 
-export function Kpi(props: { label: string; value: string; sub?: string; tone?: 'default' | 'success' | 'danger' | 'warning' }) {
+export function Kpi(props: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: 'default' | 'success' | 'danger' | 'warning';
+}) {
   const toneColor =
     props.tone === 'success'
       ? colors.success
@@ -417,13 +439,15 @@ export function Kpi(props: { label: string; value: string; sub?: string; tone?: 
         ? colors.danger
         : props.tone === 'warning'
           ? colors.warning
-          : colors.text;
+          : colors.primary;
+  // 'default' reads as neutral text; the accent still carries the brand hue.
+  const valueColor = props.tone && props.tone !== 'default' ? toneColor : colors.text;
   return (
-    <View style={styles.kpi}>
+    <View style={[styles.kpi, { borderLeftColor: toneColor }]}>
       <Text style={styles.kpiLabel} numberOfLines={2}>
         {props.label}
       </Text>
-      <Text style={[styles.kpiValue, { color: toneColor }]} numberOfLines={1} adjustsFontSizeToFit>
+      <Text style={[styles.kpiValue, { color: valueColor }]} numberOfLines={1} adjustsFontSizeToFit>
         {props.value}
       </Text>
       {props.sub ? (
@@ -694,6 +718,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
+    // Colored accent rail: gives the grid a designed, mobile feel instead of
+    // the uniform hairline boxes of a web table.
+    borderLeftWidth: 3,
   },
   kpiLabel: { fontSize: font.xs, color: colors.muted, marginBottom: spacing.xs },
   kpiValue: { fontSize: font.lg, fontWeight: '800' },

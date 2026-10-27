@@ -10,6 +10,7 @@ import { createExpense, expenseCategories, listExpenses, voidExpense } from '../
 import { paymentMethods } from '../../services/paymentService';
 import { parseMoney } from '../../core/money';
 import { messageOf } from '../../core/errors';
+import { showToast } from '../toast';
 import { can } from '../../core/permissions';
 import { rangeForPreset } from '../../core/dates';
 
@@ -75,6 +76,7 @@ export default function ExpensesScreen() {
       setDescription('');
       setAmount('');
       setPayee('');
+      showToast(t('toastSaved'));
       await load();
     } catch (e) {
       setFormError(messageOf(e));

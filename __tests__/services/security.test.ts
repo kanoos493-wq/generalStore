@@ -21,23 +21,25 @@ const answers: RecoveryAnswerInput[] = [
 ];
 
 describe('PIN records', () => {
-  it('never stores the PIN itself', () => {
-    const record = createPinRecord('4827', undefined, fast);
+  it('never stores the PIN itself', async () => {
+    const record = await createPinRecord('4827', undefined, fast);
     const serialized = JSON.stringify(record);
     expect(serialized).not.toContain('4827');
     expect(record.hash).toHaveLength(64);
     expect(record.salt).toHaveLength(32);
   });
 
-  it('verifies the correct PIN and rejects others', () => {
-    const record = createPinRecord('4827', undefined, fast);
-    expect(verifyPin('4827', record)).toBe(true);
-    expect(verifyPin('4828', record)).toBe(false);
-    expect(verifyPin('', record)).toBe(false);
+  it('verifies the correct PIN and rejects others', async () => {
+    const record = await createPinRecord('4827', undefined, fast);
+    expect(await verifyPin('4827', record)).toBe(true);
+    expect(await verifyPin('4828', record)).toBe(false);
+    expect(await verifyPin('', record)).toBe(false);
   });
 
-  it('produces a different verifier for the same PIN on another device', () => {
-    expect(createPinRecord('4827', undefined, fast).hash).not.toBe(createPinRecord('4827', undefined, fast).hash);
+  it('produces a different verifier for the same PIN on another device', async () => {
+    const a = await createPinRecord('4827', undefined, fast);
+    const b = await createPinRecord('4827', undefined, fast);
+    expect(a.hash).not.toBe(b.hash);
   });
 
   it('enforces the PIN policy', () => {
@@ -49,23 +51,23 @@ describe('PIN records', () => {
 });
 
 describe('recovery questions', () => {
-  it('requires at least two questions', () => {
-    expect(() => createRecoveryRecord([answers[0]], fast)).toThrow(/two recovery questions/);
+  it('requires at least two questions', async () => {
+    await expect(createRecoveryRecord([answers[0]], fast)).rejects.toThrow(/two recovery questions/);
   });
 
-  it('verifies all answers and never reveals which one failed', () => {
-    const record = createRecoveryRecord(answers, fast);
-    expect(verifyRecovery(answers, record)).toBe(true);
+  it('verifies all answers and never reveals which one failed', async () => {
+    const record = await createRecoveryRecord(answers, fast);
+    expect(await verifyRecovery(answers, record)).toBe(true);
     const wrong = [{ ...answers[0], answer: 'something else' }, answers[1]];
-    const result = verifyRecovery(wrong, record);
+    const result = await verifyRecovery(wrong, record);
     expect(result).toBe(false);
     expect(typeof result).toBe('boolean');
   });
 
-  it('normalises case, spacing and Urdu letter variants', () => {
+  it('normalises case, spacing and Urdu letter variants', async () => {
     expect(normalizeAnswer('  St.  MARY ')).toBe('st. mary');
     expect(normalizeAnswer('لاھور')).toBe('لاہور');
-    const record = createRecoveryRecord(
+    const record = await createRecoveryRecord(
       [
         { id: 'a', question: 'q1', answer: 'Lahore' },
         { id: 'b', question: 'q2', answer: '  Model Town ' },
@@ -73,7 +75,7 @@ describe('recovery questions', () => {
       fast,
     );
     expect(
-      verifyRecovery(
+      await verifyRecovery(
         [
           { id: 'a', answer: 'LAHORE' },
           { id: 'b', answer: 'model town' },

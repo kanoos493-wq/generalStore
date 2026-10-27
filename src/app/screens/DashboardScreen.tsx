@@ -51,6 +51,33 @@ export default function DashboardScreen() {
 
   return (
     <Screen scroll refreshing={state.loading} onRefresh={state.reload}>
+      {/* Hero: the one number the shopkeeper checks first, given real prominence
+          instead of being one tile among sixteen. */}
+      <View style={styles.hero}>
+        <Text style={styles.heroLabel}>{t('netSales')}</Text>
+        <Text style={styles.heroValue} numberOfLines={1} adjustsFontSizeToFit>
+          {f.moneyPlain(dash.sales.netSalesPaisa)}
+        </Text>
+        <View style={styles.heroRow}>
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatValue}>{dash.sales.billCount}</Text>
+            <Text style={styles.heroStatLabel}>{t('invoices')}</Text>
+          </View>
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatValue} numberOfLines={1} adjustsFontSizeToFit>
+              {f.moneyPlain(dash.sales.grossSalesPaisa)}
+            </Text>
+            <Text style={styles.heroStatLabel}>{t('grossSales')}</Text>
+          </View>
+          <View style={styles.heroStat}>
+            <Text style={styles.heroStatValue} numberOfLines={1} adjustsFontSizeToFit>
+              {f.moneyPlain(dash.cashPaymentsPaisa)}
+            </Text>
+            <Text style={styles.heroStatLabel}>{t('cashReceived')}</Text>
+          </View>
+        </View>
+      </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
         {(
           [
@@ -131,16 +158,18 @@ export default function DashboardScreen() {
         </Card>
       </Section>
 
-      {dash.trend.length > 0 ? (
-        <Section title={t('grossSales')}>
-          <Card>
+      <Section title={t('salesTrend')}>
+        <Card>
+          {dash.trend.length > 0 ? (
             <Bars
               data={dash.trend.slice(-7).map(d => ({ label: d.day.slice(5), value: d.salesPaisa }))}
               format={v => f.moneyPlain(v)}
             />
-          </Card>
-        </Section>
-      ) : null}
+          ) : (
+            <Text style={styles.muted}>{t('empty')}</Text>
+          )}
+        </Card>
+      </Section>
 
       <Section
         title={t('alerts')}
@@ -214,6 +243,18 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  hero: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  heroLabel: { color: 'rgba(255,255,255,0.85)', fontSize: font.sm, fontWeight: '600' },
+  heroValue: { color: '#FFFFFF', fontSize: font.xxl, fontWeight: '800', marginTop: spacing.xs },
+  heroRow: { flexDirection: 'row', marginTop: spacing.md, gap: spacing.md },
+  heroStat: { flex: 1 },
+  heroStatValue: { color: '#FFFFFF', fontSize: font.md, fontWeight: '700' },
+  heroStatLabel: { color: 'rgba(255,255,255,0.75)', fontSize: font.xs, marginTop: 2 },
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.lg },
   pills: { gap: spacing.sm, paddingBottom: spacing.md },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

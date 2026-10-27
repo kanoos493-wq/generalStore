@@ -13,6 +13,7 @@ import { paymentMethods } from '../../services/paymentService';
 import { parseMoney, parseQty, QTY_SCALE } from '../../core/money';
 import { costPerBaseUnit, lineTotal, marginPreview } from '../../core/pricing';
 import { messageOf } from '../../core/errors';
+import { showToast } from '../toast';
 import type { ProductRow, ProductUnitRow } from '../../db/types';
 import type { RootStackParamList } from '../navigationTypes';
 
@@ -153,6 +154,7 @@ export default function PurchaseFormScreen() {
         actor,
       });
       navigation.replace('PurchaseDetail', { purchaseId: result.purchaseId });
+      showToast(t('purchaseSaved'));
     } catch (e) {
       setError(messageOf(e));
     } finally {

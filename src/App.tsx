@@ -8,6 +8,7 @@ import LockScreen from './app/screens/LockScreen';
 import SetupWizardScreen from './app/screens/SetupWizardScreen';
 import Navigation from './app/navigation';
 import ErrorBoundary from './app/ErrorBoundary';
+import ToastHost from './app/ToastHost';
 import { useI18n } from './app/i18n';
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
   const locked = useAppStore(s => s.locked);
   const needsSetup = useAppStore(s => s.needsSetup);
   const language = useAppStore(s => s.language);
+  const noteActivity = useAppStore(s => s.noteActivity);
 
   useEffect(() => {
     void initialize();
@@ -46,7 +48,12 @@ export default function App() {
         ErrorBoundary wraps the whole switch: without it a single render error
         anywhere unmounts the tree and the app process dies (self-close).
       */}
-      <View style={styles.root}>
+      <View
+        style={styles.root}
+        onStartShouldSetResponderCapture={() => {
+          noteActivity();
+          return false;
+        }}>
         <ErrorBoundary>
           {bootError ? (
             <ErrorView message={bootError} onRetry={() => void initialize()} />
@@ -60,6 +67,7 @@ export default function App() {
             <Navigation key={language} />
           )}
         </ErrorBoundary>
+        <ToastHost />
       </View>
     </SafeAreaProvider>
   );

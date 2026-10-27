@@ -9,6 +9,7 @@ import { useActor, useDb } from '../store/appStore';
 import { createParty, updateParty } from '../../services/partyService';
 import { parseMoney } from '../../core/money';
 import { messageOf } from '../../core/errors';
+import { showToast } from '../toast';
 import type { RootStackParamList } from '../navigationTypes';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -71,6 +72,7 @@ export default function PartyFormScreen() {
       };
       if (partyId) {
         await updateParty(db, partyType, { ...input, id: partyId }, actor);
+        showToast(t('toastUpdated'));
         navigation.goBack();
       } else {
         const id = await createParty(
@@ -79,6 +81,7 @@ export default function PartyFormScreen() {
           { ...input, openingBalancePaisa: opening ? parseMoney(opening) : 0 },
           actor,
         );
+        showToast(t('toastAdded'));
         navigation.replace('PartyDetail', { partyType, partyId: id });
       }
     } catch (e) {
