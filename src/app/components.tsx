@@ -333,6 +333,69 @@ export function SelectField(props: {
   );
 }
 
+/**
+ * Touch-first numeric entry, shared by the lock screen and the setup wizard so
+ * both look and behave identically (large targets, no keyboard required).
+ */
+export function PinPad(props: {
+  value: string;
+  onChange: (value: string) => void;
+  minLength?: number;
+  maxLength?: number;
+  disabled?: boolean;
+  testID?: string;
+}) {
+  const { t } = useI18n();
+  const min = props.minLength ?? 4;
+  const max = props.maxLength ?? 8;
+  const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'];
+  const slots = Math.max(min, props.value.length);
+  return (
+    <View style={pinStyles.wrap} testID={props.testID}>
+      <View style={pinStyles.dots}>
+        {Array.from({ length: slots }).map((_, i) => (
+          <View key={i} style={[pinStyles.dot, i < props.value.length && pinStyles.dotFilled]} />
+        ))}
+      </View>
+      <View style={pinStyles.keypad}>
+        {keys.map((key, i) =>
+          key === '' ? (
+            <View key={i} style={pinStyles.key} />
+          ) : (
+            <Pressable
+              key={i}
+              accessibilityRole="button"
+              accessibilityLabel={key === '⌫' ? t('delete') : key}
+              disabled={props.disabled}
+              onPress={() => {
+                if (props.disabled) {return;}
+                if (key === '⌫') {
+                  props.onChange(props.value.slice(0, -1));
+                } else if (props.value.length < max) {
+                  props.onChange(`${props.value}${key}`);
+                }
+              }}
+              style={({ pressed }) => [pinStyles.key, pressed && { backgroundColor: colors.primarySoft }]}>
+              <Text style={pinStyles.keyText}>{key}</Text>
+            </Pressable>
+          ),
+        )}
+      </View>
+    </View>
+  );
+}
+
+/** Progress indicator for the setup wizard ("step n of m"). */
+export function StepDots(props: { count: number; index: number }) {
+  return (
+    <View style={pinStyles.steps} accessibilityRole="progressbar">
+      {Array.from({ length: props.count }).map((_, i) => (
+        <View key={i} style={[pinStyles.step, i === props.index && pinStyles.stepActive]} />
+      ))}
+    </View>
+  );
+}
+
 export function Row(props: { label: string; value: string; bold?: boolean; tone?: 'default' | 'danger' | 'success' | 'muted' }) {
   const color =
     props.tone === 'danger' ? colors.danger : props.tone === 'success' ? colors.success : props.tone === 'muted' ? colors.muted : colors.text;
@@ -690,4 +753,24 @@ const styles = StyleSheet.create({
   listRight: { fontSize: font.md, fontWeight: '700' },
   barTrack: { height: 6, backgroundColor: colors.cardAlt, borderRadius: radius.pill, overflow: 'hidden' },
   barFill: { height: 6, backgroundColor: colors.primary, borderRadius: radius.pill },
+});
+
+const pinStyles = StyleSheet.create({
+  wrap: { alignItems: 'center', gap: spacing.sm },
+  dots: { flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.md },
+  dot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    backgroundColor: 'transparent',
+  },
+  dotFilled: { backgroundColor: colors.primary },
+  keypad: { flexDirection: 'row', flexWrap: 'wrap', width: 276, alignSelf: 'center' },
+  key: { width: 92, height: 60, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md },
+  keyText: { fontSize: font.xl, fontWeight: '600', color: colors.text },
+  steps: { flexDirection: 'row', gap: 6, alignItems: 'center' },
+  step: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  stepActive: { backgroundColor: colors.primary, width: 20 },
 });

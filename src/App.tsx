@@ -5,6 +5,7 @@ import { colors, font, spacing } from './app/theme';
 import { ErrorView, LoadingView } from './app/components';
 import { attachAppStateListener, useAppStore } from './app/store/appStore';
 import LockScreen from './app/screens/LockScreen';
+import SetupWizardScreen from './app/screens/SetupWizardScreen';
 import Navigation from './app/navigation';
 import { useI18n } from './app/i18n';
 
@@ -13,6 +14,7 @@ export default function App() {
   const ready = useAppStore(s => s.ready);
   const bootError = useAppStore(s => s.bootError);
   const locked = useAppStore(s => s.locked);
+  const needsSetup = useAppStore(s => s.needsSetup);
   const language = useAppStore(s => s.language);
 
   useEffect(() => {
@@ -34,15 +36,23 @@ export default function App() {
       {/* Edge-to-edge: content draws behind the system bars and every screen
           pads itself with useInsets(), so only icon contrast matters here. */}
       <StatusBar barStyle="dark-content" />
-      <View style={styles.root} key={language}>
+      {/*
+        Order matters: a brand new install gets the setup wizard, an install
+        with a PIN gets the lock screen, and everything else goes straight in.
+        The language key sits on the navigator only, so switching language in
+        the wizard re-lays-out the app without wiping the wizard's own state.
+      */}
+      <View style={styles.root}>
         {bootError ? (
           <ErrorView message={bootError} onRetry={() => void initialize()} />
         ) : !ready ? (
           <LoadingView />
+        ) : needsSetup ? (
+          <SetupWizardScreen />
         ) : locked ? (
           <LockScreen />
         ) : (
-          <Navigation />
+          <Navigation key={language} />
         )}
       </View>
     </SafeAreaProvider>

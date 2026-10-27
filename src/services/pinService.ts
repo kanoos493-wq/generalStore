@@ -6,7 +6,8 @@
  * way (normalised, salted, hashed) and are never echoed back to the UI.
  */
 import { scrypt } from '@noble/hashes/scrypt';
-import { randomBytes, bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils';
+import { randomBytesSync } from '../core/random';
 
 export const PIN_MIN_LENGTH = 4;
 export const PIN_MAX_LENGTH = 8;
@@ -80,7 +81,7 @@ export function createPinRecord(
   params: ScryptParams = DEFAULT_SCRYPT,
 ): PinRecord {
   validatePinFormat(pin);
-  const salt = bytesToHex(randomBytes(16));
+  const salt = bytesToHex(randomBytesSync(16));
   const record: PinRecord = {
     v: PIN_RECORD_VERSION,
     algo: 'scrypt',
@@ -129,7 +130,7 @@ export function createRecoveryRecord(
     questions: questions.map(q => {
       const normalized = normalizeAnswer(q.answer);
       if (normalized.length < 2) {throw new PinPolicyError('Recovery answers are too short');}
-      const salt = bytesToHex(randomBytes(16));
+      const salt = bytesToHex(randomBytesSync(16));
       return {
         id: q.id,
         question: q.question,
@@ -258,6 +259,26 @@ export class PinManager {
     const updated = createPinRecord(newPin, undefined, record.params);
     updated.recovery = record.recovery;
     await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify(updated));
+  }
+
+  /**
+   * Replaces the recovery questions without touching the PIN verifier, so the
+   * caller never has to enter (or invent) a second PIN.
+   */
+  async setRecovery(questions: RecoveryAnswerInput[]): Promise<void> {
+    const record = await this.load();
+    if (!record) {throw new PinPolicyError('Set a PIN before adding recovery questions');}
+    const recovery = createRecoveryRecord(questions, record.params ?? DEFAULT_SCRYPT);
+    await this.storage.setItem(PIN_STORAGE_KEY, JSON.stringify({ ...record, recovery }));
+  }
+
+  /** Turns the PIN lock off. Callers must verify the current PIN first. */
+  async disablePin(currentPin: string): Promise<void> {
+    const record = await this.load();
+    if (!record) {return;}
+    if (!verifyPin(currentPin, record)) {throw new PinPolicyError('Current PIN is incorrect');}
+    await this.storage.removeItem(PIN_STORAGE_KEY);
+    await this.storage.removeItem(ATTEMPT_STORAGE_KEY);
   }
 
   async unlock(pin: string): Promise<boolean> {

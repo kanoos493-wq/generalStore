@@ -54,6 +54,8 @@ export class StoreSettings {
   get receiptLanguage(): Language {return this.raw('receipt_language') === 'ur' ? 'ur' : 'en';}
   get autoLockTimeout(): string {return this.raw('auto_lock_timeout') || '1min';}
   get pinEnabled(): boolean {return this.bool('pin_enabled', true);}
+  /** False until the first-run wizard has been completed on this device. */
+  get setupCompleted(): boolean {return this.bool('setup_completed', false);}
   get backupReminderDays(): number {return this.int('backup_reminder_days', 7);}
   get showUrduNames(): boolean {return this.bool('show_urdu_names', true);}
   get operatorName(): string {return this.raw('operator_name') || 'Owner';}

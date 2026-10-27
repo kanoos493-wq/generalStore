@@ -8,6 +8,7 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import java.io.File
+import java.security.SecureRandom
 
 /**
  * Keystore-backed key/value storage for the PIN verifier and recovery answers.
@@ -59,6 +60,36 @@ class SecureStoreModule(private val context: ReactApplicationContext) :
     @ReactMethod
     fun isAvailable(promise: Promise) {
         promise.resolve(KeystoreCrypto.isAvailable())
+    }
+
+    /**
+     * Cryptographically strong random bytes for the JS layer (PIN salts and
+     * recovery salts). Java/Kotlin has no Web Crypto, and React Native does not
+     * provide `crypto.getRandomValues`, so this is the platform CSPRNG bridge:
+     * the bytes come from Android's SecureRandom, seeded by the OS.
+     *
+     * Returned as a hex string so the JS side needs no base64 decoder.
+     */
+    @ReactMethod
+    fun randomHex(count: Double, promise: Promise) {
+        try {
+            val size = count.toInt().coerceIn(1, 4096)
+            val bytes = ByteArray(size)
+            SecureRandom().nextBytes(bytes)
+            promise.resolve(hexOf(bytes))
+        } catch (e: Exception) {
+            promise.reject("random_failed", e.message, e)
+        }
+    }
+
+    private fun hexOf(bytes: ByteArray): String {
+        val digits = "0123456789abcdef"
+        val out = StringBuilder(bytes.size * 2)
+        for (b in bytes) {
+            val v = b.toInt() and 0xff
+            out.append(digits[v ushr 4]).append(digits[v and 0x0f])
+        }
+        return out.toString()
     }
 
     @ReactMethod

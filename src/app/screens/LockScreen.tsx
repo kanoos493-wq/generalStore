@@ -1,7 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { BrandMark } from '../components';
+/**
+ * Lock screen.
+ *
+ * Only reachable when a PIN exists: first-run setup and PIN creation live in
+ * SetupWizardScreen, so this screen never asks a new user to invent a PIN and
+ * never prompts twice for the same step.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BrandMark, Field, PinPad } from '../components';
 import { colors, font, radius, spacing, touchTarget } from '../theme';
 import { useI18n } from '../i18n';
 import { pinManager, secureStorage, useAppStore } from '../store/appStore';
@@ -9,14 +16,10 @@ import {
   ATTEMPT_STORAGE_KEY,
   PIN_MAX_LENGTH,
   PIN_MIN_LENGTH,
-  RECOVERY_QUESTIONS,
   lockoutSeconds,
   validatePinFormat,
-  type RecoveryAnswerInput,
 } from '../../services/pinService';
 import { messageOf } from '../../core/errors';
-
-type Mode = 'unlock' | 'setup' | 'recovery' | 'recovery-setup';
 
 interface AttemptState {
   failed: number;
@@ -25,23 +28,21 @@ interface AttemptState {
 
 export default function LockScreen() {
   const { t } = useI18n();
-  const needsSetup = useAppStore(s => s.needsSetup);
+  const insets = useSafeAreaInsets();
   const unlockApp = useAppStore(s => s.unlock);
-  const completeSetup = useAppStore(s => s.completeSetup);
+  const refreshSecurityState = useAppStore(s => s.refreshSecurityState);
 
-  const [mode, setMode] = useState<Mode>(needsSetup ? 'setup' : 'unlock');
+  const [mode, setMode] = useState<'unlock' | 'recovery'>('unlock');
   const [pin, setPin] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const [stage, setStage] = useState<'pin' | 'confirm'>('pin');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [attempts, setAttempts] = useState<AttemptState>({ failed: 0, until: 0 });
   const [now, setNow] = useState(Date.now());
 
-  const [recoveryQuestions, setRecoveryQuestions] = useState<{ id: string; question: string }[]>([]);
-  const [recoveryAnswers, setRecoveryAnswers] = useState<Record<string, string>>({});
+  const [questions, setQuestions] = useState<{ id: string; question: string }[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [newPin, setNewPin] = useState('');
-  const [setupAnswers, setSetupAnswers] = useState<RecoveryAnswerInput[]>([]);
+  const [confirmPin, setConfirmPin] = useState('');
 
   useEffect(() => {
     void (async () => {
@@ -50,7 +51,7 @@ export default function LockScreen() {
         try {
           setAttempts(JSON.parse(raw) as AttemptState);
         } catch {
-          // ignore corrupt state
+          // ignore corrupt attempt state
         }
       }
     })();
@@ -68,13 +69,6 @@ export default function LockScreen() {
     await secureStorage.setItem(ATTEMPT_STORAGE_KEY, JSON.stringify(next));
   }, []);
 
-  const reset = useCallback(() => {
-    setPin('');
-    setConfirm('');
-    setStage('pin');
-    setError(null);
-  }, []);
-
   const submitUnlock = useCallback(
     async (entered: string) => {
       if (lockedFor > 0 || busy) {return;}
@@ -89,95 +83,55 @@ export default function LockScreen() {
           const seconds = lockoutSeconds(failed);
           await persistAttempts({ failed, until: seconds ? Date.now() + seconds * 1000 : 0 });
           setError(t('wrongPin'));
-          reset();
+          setPin('');
         }
       } catch (e) {
         setError(messageOf(e));
+        setPin('');
       } finally {
         setBusy(false);
       }
     },
-    [attempts.failed, busy, lockedFor, persistAttempts, reset, t, unlockApp],
+    [attempts.failed, busy, lockedFor, persistAttempts, t, unlockApp],
   );
 
+  // Submit once the entered length matches the stored PIN's length.
   useEffect(() => {
-    if (mode !== 'unlock' || lockedFor > 0) {return;}
-    if (pin.length === PIN_MAX_LENGTH) {void submitUnlock(pin);}
-    else if (pin.length >= PIN_MIN_LENGTH) {
-      // auto-submit at the configured length once it matches the stored one
-      void (async () => {
-        const record = await pinManager.load();
-        if (record && pin.length === record.pinLength) {void submitUnlock(pin);}
-      })();
-    }
+    if (mode !== 'unlock' || lockedFor > 0 || busy) {return;}
+    if (pin.length < PIN_MIN_LENGTH) {return;}
+    void (async () => {
+      const record = await pinManager.load();
+      if (!record) {
+        // The PIN verifier vanished (for example after clearing app data):
+        // stop pretending the app is locked instead of trapping the user.
+        await refreshSecurityState();
+        return;
+      }
+      if (pin.length === Math.min(PIN_MAX_LENGTH, record.pinLength)) {
+        void submitUnlock(pin);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pin]);
-
-  const pressDigit = (digit: string) => {
-    if (busy || lockedFor > 0) {return;}
-    setError(null);
-    setPin(p => (p.length >= PIN_MAX_LENGTH ? p : `${p}${digit}`));
-  };
-
-  const pressBack = () => {
-    setError(null);
-    setPin(p => p.slice(0, -1));
-  };
-
-  const beginSetup = async () => {
-    setError(null);
-    try {
-      validatePinFormat(pin);
-      if (pin !== confirm) {throw new Error(t('pinMismatch'));}
-      setStage('pin');
-      setMode('recovery-setup');
-      setSetupAnswers([
-        { id: RECOVERY_QUESTIONS[0].id, question: t(RECOVERY_QUESTIONS[0].id) === RECOVERY_QUESTIONS[0].id ? RECOVERY_QUESTIONS[0].en : RECOVERY_QUESTIONS[0].en, answer: '' },
-        { id: RECOVERY_QUESTIONS[3].id, question: RECOVERY_QUESTIONS[3].en, answer: '' },
-      ]);
-    } catch (e) {
-      setError(messageOf(e));
-    }
-  };
-
-  const finishSetup = async (withRecovery: boolean) => {
-    setBusy(true);
-    try {
-      validatePinFormat(pin);
-      const questions = withRecovery
-        ? setupAnswers.filter(a => a.answer.trim().length > 1)
-        : [];
-      if (withRecovery && questions.length < 2) {
-        throw new Error(t('answerHint'));
-      }
-      await pinManager.setPin(pin, questions.length ? { questions } : undefined);
-      if (withRecovery) {
-        await useAppStore.getState().saveSettings({ pin_recovery_enabled: '1' });
-      }
-      await completeSetup();
-    } catch (e) {
-      setError(messageOf(e));
-      if (mode === 'recovery-setup') {setMode('setup');}
-    } finally {
-      setBusy(false);
-    }
-  };
+  }, [pin, mode, lockedFor, busy]);
 
   const openRecovery = async () => {
-    const questions = await pinManager.recoveryQuestions();
-    setRecoveryQuestions(questions);
-    setRecoveryAnswers({});
+    const listed = await pinManager.recoveryQuestions();
+    setQuestions(listed);
+    setAnswers({});
     setNewPin('');
+    setConfirmPin('');
     setError(null);
     setMode('recovery');
   };
 
   const submitRecovery = async () => {
     setBusy(true);
+    setError(null);
     try {
       validatePinFormat(newPin);
+      if (newPin !== confirmPin) {throw new Error(t('pinMismatch'));}
       await pinManager.recoverWithAnswers(
-        recoveryQuestions.map(q => ({ id: q.id, answer: recoveryAnswers[q.id] ?? '' })),
+        questions.map(q => ({ id: q.id, answer: answers[q.id] ?? '' })),
         newPin,
       );
       await persistAttempts({ failed: 0, until: 0 });
@@ -189,178 +143,78 @@ export default function LockScreen() {
     }
   };
 
-  const keypad = useMemo(() => ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫'], []);
-
-  const renderPinDots = (value: string) => (
-    <View style={styles.dots}>
-      {Array.from({ length: Math.max(PIN_MIN_LENGTH, value.length) }).map((_, i) => (
-        <View key={i} style={[styles.dot, i < value.length && styles.dotFilled]} />
-      ))}
-    </View>
-  );
-
   if (mode === 'recovery') {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>{t('recoveryQuestions')}</Text>
           <Text style={styles.warn}>{t('recoveryHint')}</Text>
-          {recoveryQuestions.length === 0 ? (
+          {questions.length === 0 ? (
             <Text style={styles.warn}>{t('noRecovery')}</Text>
           ) : (
-            recoveryQuestions.map(q => (
-              <View key={q.id} style={{ marginBottom: spacing.md }}>
-                <Text style={styles.label}>{q.question}</Text>
-                <TextInput
-                  style={styles.input}
-                  value={recoveryAnswers[q.id] ?? ''}
-                  onChangeText={v => setRecoveryAnswers(prev => ({ ...prev, [q.id]: v }))}
-                  autoCapitalize="none"
-                  placeholder="—"
-                  placeholderTextColor={colors.faint}
-                />
-              </View>
+            questions.map(q => (
+              <Field
+                key={q.id}
+                label={q.question}
+                value={answers[q.id] ?? ''}
+                onChangeText={v => setAnswers(prev => ({ ...prev, [q.id]: v }))}
+              />
             ))
           )}
-          {recoveryQuestions.length > 0 && (
+          {questions.length > 0 ? (
             <>
-              <Text style={styles.label}>{t('setPin')}</Text>
-              <TextInput
-                style={styles.input}
+              <Field
+                label={t('setPin')}
                 value={newPin}
                 onChangeText={setNewPin}
                 keyboardType="number-pad"
-                secureTextEntry
                 maxLength={PIN_MAX_LENGTH}
-                placeholder={`${PIN_MIN_LENGTH}-${PIN_MAX_LENGTH}`}
-                placeholderTextColor={colors.faint}
+                secure
+              />
+              <Field
+                label={t('confirmPin')}
+                value={confirmPin}
+                onChangeText={setConfirmPin}
+                keyboardType="number-pad"
+                maxLength={PIN_MAX_LENGTH}
+                secure
               />
               {error ? <Text style={styles.error}>{error}</Text> : null}
               <Pressable style={[styles.primaryBtn, busy && { opacity: 0.6 }]} onPress={submitRecovery} disabled={busy}>
                 <Text style={styles.primaryBtnText}>{t('unlock')}</Text>
               </Pressable>
             </>
-          )}
-          <Pressable onPress={() => { setMode('unlock'); setError(null); }} style={styles.linkBtn}>
+          ) : null}
+          <Pressable
+            onPress={() => {
+              setMode('unlock');
+              setError(null);
+            }}
+            style={styles.linkBtn}>
             <Text style={styles.link}>{t('back')}</Text>
           </Pressable>
         </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (mode === 'recovery-setup') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>{t('recoveryQuestions')}</Text>
-          <Text style={styles.warn}>{t('recoveryHint')}</Text>
-          {setupAnswers.map((answer, index) => (
-            <View key={index} style={{ marginBottom: spacing.md }}>
-              <Text style={styles.label}>{answer.question}</Text>
-              <TextInput
-                style={styles.input}
-                value={answer.answer}
-                onChangeText={v =>
-                  setSetupAnswers(prev => prev.map((a, i) => (i === index ? { ...a, answer: v } : a)))
-                }
-                autoCapitalize="none"
-                placeholder="—"
-                placeholderTextColor={colors.faint}
-              />
-              <View style={styles.chips}>
-                {RECOVERY_QUESTIONS.slice(0, 6).map(q => (
-                  <Pressable
-                    key={q.id}
-                    onPress={() =>
-                      setSetupAnswers(prev =>
-                        prev.map((a, i) => (i === index ? { ...a, id: q.id, question: q.en } : a)),
-                      )
-                    }
-                    style={[styles.chip, answer.id === q.id && styles.chipActive]}>
-                    <Text style={[styles.chipText, answer.id === q.id && styles.chipTextActive]} numberOfLines={1}>
-                      {q.en.replace(/\?$/, '')}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          ))}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable style={styles.primaryBtn} onPress={() => finishSetup(true)} disabled={busy}>
-            <Text style={styles.primaryBtnText}>{t('save')}</Text>
-          </Pressable>
-          <Pressable style={styles.linkBtn} onPress={() => finishSetup(false)} disabled={busy}>
-            <Text style={styles.link}>{t('skipForNow')}</Text>
-          </Pressable>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
-  if (mode === 'setup') {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.center}>
-          <BrandMark size={72} />
-        <Text style={styles.title}>DukanDost</Text>
-        <Text style={styles.title}>{t('setupTitle')}</Text>
-          <Text style={styles.body}>{t('setupBody')}</Text>
-          <Text style={styles.label}>{stage === 'pin' ? t('setPin') : t('confirmPin')}</Text>
-          {renderPinDots(stage === 'pin' ? pin : confirm)}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <View style={styles.keypad}>
-            {keypad.map((key, i) =>
-              key === '' ? (
-                <View key={i} style={styles.key} />
-              ) : (
-                <Pressable
-                  key={i}
-                  onPress={() => {
-                    setError(null);
-                    const setter = stage === 'pin' ? setPin : setConfirm;
-                    const current = stage === 'pin' ? pin : confirm;
-                    if (key === '⌫') {
-                      setter(current.slice(0, -1));
-                    } else if (current.length < PIN_MAX_LENGTH) {
-                      setter(`${current}${key}`);
-                    }
-                  }}
-                  style={({ pressed }) => [styles.key, pressed && { backgroundColor: colors.primarySoft }]}>
-                  <Text style={styles.keyText}>{key}</Text>
-                </Pressable>
-              ),
-            )}
-          </View>
-          <Pressable
-            style={[styles.primaryBtn, { width: '100%' }]}
-            onPress={() => {
-              if (stage === 'pin') {
-                try {
-                  validatePinFormat(pin);
-                  setStage('confirm');
-                  setError(null);
-                } catch (e) {
-                  setError(messageOf(e));
-                }
-              } else {
-                void beginSetup();
-              }
-            }}>
-            <Text style={styles.primaryBtnText}>{stage === 'pin' ? t('continue') : t('save')}</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.center}>
+    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <ScrollView contentContainerStyle={styles.center} keyboardShouldPersistTaps="handled">
         <BrandMark size={88} />
-        <Text style={styles.title}>DukanDost</Text>
-        <Text style={styles.title}>{t('enterPin')}</Text>
-        {renderPinDots(pin)}
+        <Text style={styles.brand}>DukanDost</Text>
+        <Text style={styles.subtitle}>{t('enterPin')}</Text>
+        <PinPad
+          testID="lock-pinpad"
+          value={pin}
+          onChange={value => {
+            setError(null);
+            setPin(value);
+          }}
+          minLength={PIN_MIN_LENGTH}
+          maxLength={PIN_MAX_LENGTH}
+          disabled={busy || lockedFor > 0}
+        />
         {lockedFor > 0 ? (
           <Text style={styles.error}>
             {t('lockedFor')} {lockedFor}
@@ -369,35 +223,27 @@ export default function LockScreen() {
         ) : error ? (
           <Text style={styles.error}>{error}</Text>
         ) : null}
-        <View style={styles.keypad}>
-          {keypad.map((key, i) =>
-            key === '' ? (
-              <View key={i} style={styles.key} />
-            ) : (
-              <Pressable
-                key={i}
-                onPress={() => (key === '⌫' ? pressBack() : pressDigit(key))}
-                style={({ pressed }) => [styles.key, pressed && { backgroundColor: colors.primarySoft }]}>
-                <Text style={styles.keyText}>{key}</Text>
-              </Pressable>
-            ),
-          )}
-        </View>
         <Pressable onPress={openRecovery} style={styles.linkBtn}>
           <Text style={styles.link}>{t('forgotPin')}</Text>
         </Pressable>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg, gap: spacing.sm },
+  center: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+    gap: spacing.sm,
+  },
+  brand: { fontSize: font.lg, fontWeight: '800', color: colors.text },
   title: { fontSize: font.xl, fontWeight: '800', color: colors.text, marginBottom: spacing.xs, textAlign: 'center' },
-  body: { fontSize: font.sm, color: colors.muted, textAlign: 'center', marginBottom: spacing.lg },
-  label: { fontSize: font.sm, color: colors.muted, fontWeight: '600', marginBottom: spacing.xs },
+  subtitle: { fontSize: font.sm, color: colors.muted, textAlign: 'center', marginBottom: spacing.sm },
   warn: {
     fontSize: font.sm,
     color: colors.warning,
@@ -406,25 +252,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     marginBottom: spacing.lg,
   },
-  dots: { flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.md },
-  dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    backgroundColor: 'transparent',
-  },
-  dotFilled: { backgroundColor: colors.primary },
-  keypad: { flexDirection: 'row', flexWrap: 'wrap', width: 288, marginVertical: spacing.md },
-  key: {
-    width: 96,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.md,
-  },
-  keyText: { fontSize: font.xl, fontWeight: '600', color: colors.text },
   primaryBtn: {
     backgroundColor: colors.primary,
     minHeight: touchTarget,
@@ -433,32 +260,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
     marginTop: spacing.md,
-    width: '100%',
   },
   primaryBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: font.md },
   linkBtn: { padding: spacing.md, marginTop: spacing.sm },
   link: { color: colors.primary, fontWeight: '600' },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    padding: spacing.md,
-    fontSize: font.md,
-    color: colors.text,
-    backgroundColor: colors.card,
-  },
   error: { color: colors.danger, fontWeight: '600', textAlign: 'center' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
-  chip: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    maxWidth: 170,
-  },
-  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  chipText: { fontSize: font.xs, color: colors.muted },
-  chipTextActive: { color: colors.onPrimary },
 });

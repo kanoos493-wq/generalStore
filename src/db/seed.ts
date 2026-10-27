@@ -33,6 +33,8 @@ export const DEFAULT_SETTINGS: Record<string, string> = {
   auto_lock_timeout: '1min',
   pin_enabled: '1',
   pin_recovery_enabled: '0',
+  // 0 until the first-run wizard writes the shop profile and closes it.
+  setup_completed: '0',
   backup_reminder_days: '7',
   show_urdu_names: '1',
   low_stock_source: 'min',

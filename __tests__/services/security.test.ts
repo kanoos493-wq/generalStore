@@ -123,6 +123,34 @@ describe('PinManager', () => {
     expect(await manager.unlock('4827')).toBe(false);
   });
 
+  it('enrols recovery questions without touching the PIN', async () => {
+    const manager = new PinManager(new MemorySecureStorage());
+    await manager.setPin('4827');
+    const before = await manager.load();
+    await manager.setRecovery(answers);
+    const after = await manager.load();
+    // Same verifier, same salt: the PIN was not re-derived or re-prompted.
+    expect(after?.hash).toBe(before?.hash);
+    expect(after?.salt).toBe(before?.salt);
+    expect(await manager.recoveryQuestions()).toHaveLength(2);
+    expect(await manager.unlock('4827')).toBe(true);
+  });
+
+  it('refuses recovery questions before a PIN exists', async () => {
+    const manager = new PinManager(new MemorySecureStorage());
+    await expect(manager.setRecovery(answers)).rejects.toThrow(/Set a PIN/);
+  });
+
+  it('turns the PIN off only with the current PIN', async () => {
+    const manager = new PinManager(new MemorySecureStorage());
+    await manager.setPin('4827');
+    await expect(manager.disablePin('9999')).rejects.toThrow(/incorrect/);
+    expect(await manager.hasPin()).toBe(true);
+    await manager.disablePin('4827');
+    expect(await manager.hasPin()).toBe(false);
+    expect(await manager.unlock('4827')).toBe(false);
+  });
+
   it('recovers with the right answers and keeps the same recovery set', async () => {
     const manager = new PinManager(new MemorySecureStorage());
     await manager.setPin('4827', { questions: answers });

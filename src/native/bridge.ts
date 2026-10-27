@@ -46,6 +46,8 @@ export interface SqliteBridgeModule {
 
 export interface SecureStoreModule extends SecureStorageAdapter {
   isAvailable(): Promise<boolean>;
+  /** Hex-encoded bytes from Android's SecureRandom (see core/random.ts). */
+  randomHex(count: number): Promise<string>;
   decryptFile(path: string): Promise<string>;
   sha256OfFile(path: string): Promise<string>;
 }

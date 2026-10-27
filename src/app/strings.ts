@@ -234,6 +234,15 @@ const S: Record<string, Entry> = {
   autoLock: { en: 'Auto-lock after', ur: 'خودکار تالا' },
   changePin: { en: 'Change PIN', ur: 'پن تبدیل کریں' },
   recoveryQuestions: { en: 'Recovery questions', ur: 'بحالی کے سوالات' },
+  setRecovery: { en: 'Add recovery questions', ur: 'بحالی کے سوالات شامل کریں' },
+  changeRecovery: { en: 'Change recovery questions', ur: 'بحالی کے سوالات بدلیں' },
+  recoveryNeedsPin: { en: 'Add a PIN first; recovery only exists to reset a PIN.', ur: 'پہلے پن مقرر کریں؛ بحالی صرف پن بحال کرنے کے لئے ہے۔' },
+  currentPin: { en: 'Current PIN', ur: 'موجودہ پن' },
+  turnOffPin: { en: 'Turn off PIN lock', ur: 'پن بند کریں' },
+  turnOffPinHint: {
+    en: 'The app will open without a PIN. Your data stays on this phone either way.',
+    ur: 'ایپ پن کے بغیر کھلے گی۔ ڈیٹا ہر صورت اسی فون میں محفوظ رہتا ہے۔',
+  },
   createBackup: { en: 'Create backup', ur: 'بیک اپ بنائیں' },
   restoreBackup: { en: 'Restore backup', ur: 'بیک اپ بحال کریں' },
   lastBackup: { en: 'Last backup', ur: 'آخری بیک اپ' },
@@ -253,11 +262,6 @@ const S: Record<string, Entry> = {
   confirmPin: { en: 'Confirm PIN', ur: 'پن دوبارہ درج کریں' },
   wrongPin: { en: 'Wrong PIN', ur: 'غلط پن' },
   unlock: { en: 'Unlock', ur: 'کھولیں' },
-  setupTitle: { en: 'Protect your shop data', ur: 'اپنے ڈیٹا کی حفاظت کریں' },
-  setupBody: {
-    en: 'Set a PIN before entering the store data. It is never stored on the device in plain text.',
-    ur: 'ڈیٹا کھولنے سے پہلے پن مقرر کریں۔ پن کبھی بھی سادہ متن میں محفوظ نہیں ہوتا۔',
-  },
   forgotPin: { en: 'Forgot PIN?', ur: 'پن بھول گئے؟' },
   recoveryHint: {
     en: 'Recovery questions are weaker than a strong PIN. Also keep a recent backup file outside this phone.',
@@ -274,6 +278,72 @@ const S: Record<string, Entry> = {
   continue: { en: 'Continue', ur: 'آگے بڑھیں' },
   back: { en: 'Back', ur: 'واپس' },
   skipForNow: { en: 'Skip for now', ur: 'ابھی نہیں' },
+  answer: { en: 'Answer', ur: 'جواب' },
+  question: { en: 'Question', ur: 'سوال' },
+  on: { en: 'On', ur: 'فعال' },
+  off: { en: 'Off', ur: 'بند' },
+
+  // first-run wizard
+  wizardStep: { en: 'Step {n} of {total}', ur: 'قدم {n} از {total}' },
+  wizardWelcomeTitle: { en: 'Welcome to DukanDost', ur: 'دکان دوست میں خوش آمدید' },
+  wizardWelcomeBody: {
+    en: 'Set up your shop in a few short steps, then start selling. Everything works offline: no account, no internet, no subscription.',
+    ur: 'چند مختصر قدموں میں اپنی دکان ترتیب دیں اور فروخت شروع کریں۔ سب کچھ آف لائن چلتا ہے: نہ اکاؤنٹ، نہ انٹرنیٹ، نہ ماہانہ فیس۔',
+  },
+  wizardOffline: {
+    en: 'Works offline · No account · Data stays on this phone',
+    ur: 'آف لائن · کوئی اکاؤنٹ نہیں · ڈیٹا اسی فون میں رہتا ہے',
+  },
+  wizardStoreTitle: { en: 'Your store', ur: 'آپ کی دکان' },
+  wizardStoreBody: {
+    en: 'This name, phone and address are printed on receipts and used in reports.',
+    ur: 'یہ نام، فون اور پتہ رسیدوں پر چھپے گا اور رپورٹس میں استعمال ہوگا۔',
+  },
+  wizardStoreNameHint: { en: 'For example: Al-Madina Kiryana Store', ur: 'مثال: المدینہ کریانہ اسٹور' },
+  storeNameRequired: { en: 'Enter your store name to continue', ur: 'آگے بڑھنے کے لئے دکان کا نام لکھیں' },
+  wizardOperatorTitle: { en: 'Who runs the shop?', ur: 'دکان کون چلاتا ہے؟' },
+  wizardOperatorBody: {
+    en: 'Shown on bills as the cashier and recorded on every transaction. You can change it later.',
+    ur: 'بل پر کیشیئر کے طور پر آئے گا اور ہر لین دین میں محفوظ ہوگا۔ بعد میں بدل سکتے ہیں۔',
+  },
+  ownerName: { en: 'Owner / operator name', ur: 'مالک / آپریٹر کا نام' },
+  wizardSecurityTitle: { en: 'Protect your data', ur: 'اپنے ڈیٹا کی حفاظت' },
+  wizardSecurityBody: {
+    en: 'A PIN stops anyone who picks up the phone from opening your sales, stock and customer khata.',
+    ur: 'پن لگانے سے فون اٹھانے والا کوئی بھی آپ کی فروخت، اسٹاک اور گاہک کا کھاتہ نہیں کھول سکتا۔',
+  },
+  usePin: { en: 'Ask for a PIN when the app opens', ur: 'ایپ کھولنے پر پن پوچھیں' },
+  pinAlreadySet: { en: 'A PIN is already set on this device', ur: 'اس فون پر پن پہلے سے مقرر ہے' },
+  pinAlreadySetHint: {
+    en: 'Keep using it, or change it later in Settings → Security.',
+    ur: 'یہی پن استعمال کریں، یا بعد میں ترتیبات → سیکیورٹی سے بدلیں۔',
+  },
+  recoveryOptional: { en: 'Recovery questions', ur: 'بحالی کے سوالات' },
+  recoveryOptionalHint: {
+    en: 'Optional. Two questions let you reset a forgotten PIN; choose ones only you can answer.',
+    ur: 'اختیاری۔ دو سوالات سے بھولا ہوا پن بحال ہو سکتا ہے؛ ایسے سوال چنیں جن کا جواب صرف آپ جانتے ہوں۔',
+  },
+  chooseQuestions: { en: 'Choose two different questions', ur: 'دو مختلف سوالات منتخب کریں' },
+  questionsMustDiffer: { en: 'Choose two different questions', ur: 'دو مختلف سوالات منتخب کریں' },
+  recoveryAnswersRequired: { en: 'Answer both questions, or turn recovery off', ur: 'دونوں سوالات کے جواب دیں یا بحالی بند کریں' },
+  wizardReviewTitle: { en: 'Ready to start', ur: 'سب تیار ہے' },
+  wizardReviewBody: {
+    en: 'Check the details below. Everything can be changed later in Settings.',
+    ur: 'نیچے تفصیل دیکھ لیں۔ سب کچھ بعد میں ترتیبات میں بدلا جا سکتا ہے۔',
+  },
+  startUsing: { en: 'Start using DukanDost', ur: 'دکان دوست شروع کریں' },
+  wizardFinishHint: {
+    en: 'Next: add your products (or import them), then sell from the Sale tab.',
+    ur: 'آگے: اپنی مصنوعات شامل کریں، پھر فروخت کے ٹیب سے بیچیں۔',
+  },
+  pinLabel: { en: 'PIN', ur: 'پن' },
+  storeLabel: { en: 'Store', ur: 'دکان' },
+  ownerLabel: { en: 'Owner', ur: 'مالک' },
+  recoveryNotSet: { en: 'Not set', ur: 'مقرر نہیں' },
+  secureRandomMissing: {
+    en: 'This phone did not provide a secure random source, so a PIN cannot be created right now. Restart the app and try again, or skip the PIN for now.',
+    ur: 'اس فون نے محفوظ رینڈم ذریعہ فراہم نہیں کیا، اس لئے ابھی پن نہیں بن سکتا۔ ایپ دوبارہ کھولیں، یا پن چھوڑ دیں۔',
+  },
 };
 
 export function translate(lang: Language, key: string, vars?: Record<string, string | number>): string {
