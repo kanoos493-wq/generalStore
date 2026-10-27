@@ -67,7 +67,13 @@ Download the artifact: **Actions → run → Artifacts → general-store-debug-a
 1. Download and unzip `general-store-debug-apk` (it contains `general-store-debug.apk`).
 2. Copy it to the phone (USB, or any transfer the user already uses).
 3. Open it, allow “Install unknown apps” for the file manager/browser once, install.
-4. First launch asks for a PIN (4–8 digits) — there is no default PIN and no bypass.
+4. First launch opens the **setup wizard**: language → store name/phone/address → owner name →
+   optional PIN (4–8 digits, with two recovery questions) → review → dashboard. There is no default
+   PIN and no bypass; if you skip the PIN the app opens straight into the dashboard.
+   *If Android itself shows a “Scan” / “Scan device for harmful apps” step while you install the
+   APK, that dialog comes from the system (Play Protect) for apps installed outside the Play Store,
+   not from DukanDost: the app declares no camera, location, storage or internet permission and
+   asks for nothing at launch.*
 5. Optional: pair a Bluetooth thermal printer in **More → Settings → Printer** before the first
    bill.
 

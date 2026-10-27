@@ -1,6 +1,6 @@
 {
   "name": "general-store",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Offline-first general store management and POS for Android (React Native + TypeScript + SQLite)",
   "scripts": {

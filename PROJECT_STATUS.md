@@ -1,6 +1,6 @@
 # Project status
 
-Last updated: 2026-10-26 · Schema v1 · App version 1.0.0
+Last updated: 2026-10-27 · Schema v1 · App version 1.0.1 (versionCode 2)
 
 Legend: ✅ done and verified · 🟡 done but limited / partially verified · ❌ not implemented ·
 ⛔ blocked in this environment · ⬜ planned
@@ -13,7 +13,7 @@ Legend: ✅ done and verified · 🟡 done but limited / partially verified · �
 | --- | --- | --- |
 | TypeScript | `npm run typecheck` | ✅ clean |
 | ESLint | `npm run lint` | ✅ 0 problems |
-| Tests | `npm test` | ✅ **130 passed / 130**, 15 suites |
+| Tests | `npm test` | ✅ **156 passed / 162**, 19 suites (6 skipped = opt-in benchmark) |
 | Benchmark | `npm run test:bench` | ✅ 6 scenarios, numbers below |
 | Android build | `./gradlew assembleDebug` | ⛔ **not run** — no JDK/Android SDK on this machine |
 
@@ -23,6 +23,30 @@ search 2.4 ms, Urdu search 2.0 ms, barcode lookup 1.3 ms, sales page 1.1 ms, 30-
 13.7 ms, 30-day profit report 9.0 ms.
 
 ---
+
+## 1b. First-run and PIN fixes (2026-10-27, v1.0.1)
+
+Reported from a real install of the 1.0.0 debug APK: the app asked for a PIN on a *fresh*
+installation, then for recovery questions in a chip-picker, then asked for the PIN a second time and
+failed with **“crypto.getRandomValues must be defined”**.
+
+| # | Root cause | Fix |
+| --- | --- | --- |
+| 1 | PIN salts came from `@noble/hashes` → `globalThis.crypto.getRandomValues`, which **does not exist in React Native**. Every PIN/recovery enrolment threw on a device (Node/Jest has Web Crypto, so tests never caught it). | New `src/core/random.ts`: platform Web Crypto when present, otherwise an entropy pool filled from Android `SecureRandom` through a new `SecureStore.randomHex()` Kotlin method (`src/native/bridge.ts`). No `Math.random` fallback on a device; the failure is reported in the UI. Pool primed in `appStore.initialize()` before any PIN work. |
+| 2 | First launch showed the **lock screen's setup mode** (PIN keypad) because `locked` started `true` and “needs setup” was inferred from “PIN enabled but missing”. | New `SetupWizardScreen`: welcome + language → shop profile → owner → optional PIN + recovery → review. `setup_completed` (new setting, default `'0'`, so existing installs get the wizard once) drives the gate; `locked` is now `setupComplete && hasPin`. A PIN is optional — with none, the app never locks. |
+| 3 | Recovery questions were chip buttons with no real picker, and finishing them re-asked for the PIN. | Recovery enrolment uses the shared `SelectField` dropdown in both the wizard and Security; `PinManager.setRecovery()` writes the questions without touching the PIN verifier, so nothing asks for the PIN twice. Security settings also gained **Set / Change / Turn off PIN**. |
+| 4 | Hardcoded `secureStorage.setItem('pin_record_v1', …)` in the Security screen bypassed `PinManager` and could write a record without a matching policy check. | Replaced with `PinManager.setRecovery()` / `disablePin()`; tests assert the verifier and salt are untouched by recovery enrolment. |
+
+Verified locally: `npm run typecheck` clean, `npm run lint` 0 problems, `npm test` 156 passed
+(19 suites). New coverage: `__tests__/ui/setup-flow.test.tsx` (wizard end-to-end on a real SQLite
+file, PIN created once, no second prompt, no store name ⇒ cannot continue),
+`__tests__/core/random.test.ts` (incl. PIN creation with Web Crypto hidden = the on-device path) and
+`__tests__/services/onboarding.test.ts` (fresh DB ⇒ not set up; empty-shop dashboard/reports do not
+invent numbers).
+
+**Still not verified here:** the Kotlin `randomHex` method has not been compiled (no JDK/SDK on this
+machine) and the fixed APK has not been installed. Both are pending the GitHub Actions build and a
+phone install.
 
 ## 2. Milestones
 
@@ -117,7 +141,7 @@ search 2.4 ms, Urdu search 2.0 ms, barcode lookup 1.3 ms, sales page 1.1 ms, 30-
   mark on Lock and About, and shared design tokens incl. `motion`. See BRANDING.md.
 - **Reduced motion** — `useReducedMotion()` (AccessibilityInfo) gates sheet animation.
 - **Tests** — `__tests__/ui/layout.test.tsx` asserts the inset contract and brand-mark basics.
-  Current totals: **135 passing**.
+  Current totals: **156 passing / 162**, 19 suites.
 
 ### ✅ APK built in GitHub Actions (verified)
 
@@ -146,17 +170,19 @@ claim in §7 below stays untested until someone sideloads `general-store-debug-a
   in README.md §10; the rejection paths are covered by tests.
 
 ### ⛔ Blocked in this environment
-- **APK generation.** No JDK, no Android SDK, no emulator here. The workflow in
-  [.github/workflows/android.yml](.github/workflows/android.yml) is committed and is the intended
-  path; it has not been executed (no push was made).
+- **Building on this machine.** No JDK, no Android SDK, no emulator here, so `./gradlew` cannot run
+  locally. The APK comes from [.github/workflows/android.yml](.github/workflows/android.yml) on
+  GitHub's runners, which has built and uploaded the artifacts successfully (see below).
 - **On-device verification** — install, launch, offline workflow, printer pairing, real keyboard
-  behaviour. Requires a phone.
-- **Kotlin compile check.** The native modules have not been compiled. Their method names were
-  cross-checked against the TypeScript bridge by grep, but a compiler is the real test.
+  behaviour, and the 1.0.1 first-run wizard. Requires a phone; the owner's phone run is what
+  produced the 1.0.0 bug report.
+- **Kotlin compile check.** The native modules have never been compiled on this machine. They do
+  compile on CI (the `apk` job is green), but the newest addition — `SecureStore.randomHex()` — was
+  written after the last green run and is waiting for its first CI compile.
 
 ---
 
-## 4. Test inventory (130 tests)
+## 4. Test inventory (162 tests, 19 suites)
 
 | Suite | Focus |
 | --- | --- |
@@ -172,7 +198,10 @@ claim in §7 below stays untested until someone sideloads `general-store-debug-a
 | `services/operations` | adjustments, expenses, cash closing, permission denials |
 | `services/reports` | sales/profit/stock reports reconciling with ledgers |
 | `services/receipt` | 58/80 mm layout, Urdu lines, duplicate marking |
-| `services/security` | PIN verifier, salts, policy, recovery questions, lockout, change PIN |
+| `core/random` | byte count, salt uniqueness, hex round-trip + malformed hex rejection, native entropy pool, fail-loud with no source, **PIN creation with Web Crypto hidden** (the on-device path) |
+| `services/security` | PIN verifier, salts, policy, recovery questions, lockout, change PIN, recovery enrolment that leaves the verifier untouched, turning the PIN off |
+| `services/onboarding` | fresh database reports “not set up”, wizard result persists, Urdu store name round-trip, empty-shop dashboard/reports (no invented numbers, no NaN) |
+| `ui/setup-flow` | first render is the wizard (never a PIN prompt), full walkthrough without a PIN, PIN created once with recovery answers, store name required |
 | `services/backup` | snapshot, checksum, corrupt-file rejection, version guard, restore, role check |
 | `ui/components` | shared components render (RNTL) |
 | `perf/bench` | opt-in benchmark (skipped in the normal run) |

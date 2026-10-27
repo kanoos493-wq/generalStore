@@ -18,7 +18,9 @@ advertising SDK and **no `INTERNET` permission** in the Android manifest.
 | --- | --- |
 | TypeScript typecheck (`npm run typecheck`) | ✅ clean |
 | ESLint (`npm run lint`) | ✅ clean, 0 problems |
-| Automated tests (`npm test`) | ✅ 135 passing / 16 suites (business logic, SQLite integration, layout, components) |
+| Automated tests (`npm test`) | ✅ 162 total, **156 passing / 19 suites** (business logic, SQLite integration, first-run flow, layout, components); 6 skipped = the opt-in benchmark |
+| First-run flow | ✅ fresh install → setup wizard → shop profile → optional PIN (with recovery) → dashboard. Covered by `__tests__/ui/setup-flow.test.tsx` against a real database |
+| PIN randomness on Android | ✅ PIN salts come from Android `SecureRandom` through the native bridge, not from `crypto.getRandomValues` (which does not exist in React Native). See [SECURITY.md](SECURITY.md) §2 |
 | Performance benchmark (`npm run test:bench`) | ✅ measured on a synthetic 2,000 products / 40,000 sales dataset (see §7) |
 | Android APK | ✅ **built by GitHub Actions** — run 40361107093 on `1ffc58b` produced `general-store-debug-apk` (46.25 MB) and `general-store-release-apk` (26.91 MB), each verified to contain `assets/index.android.bundle`. ⚠️ **Not yet installed or launched on a phone** — see [BUILD_APK.md](BUILD_APK.md) |
 | Database encryption (SQLCipher) | ❌ **not implemented**. The database file is plain SQLite protected by the PIN gate and app-private storage. See [SECURITY.md](SECURITY.md) |
@@ -78,6 +80,15 @@ advertising SDK and **no `INTERNET` permission** in the Android manifest.
 - Backup = consistent SQLite snapshot, checksummed, recorded, optionally AES-GCM encrypted with
   an Android Keystore key; restore validates integrity and schema version **before** replacing
   anything.
+
+### First run
+- A brand new install opens a **setup wizard**, never a PIN prompt: store name (English + Urdu),
+  phone, address, language, owner name, an optional PIN with two recovery questions, then a review
+  screen that opens the dashboard.
+- Everything is written in one transaction (`appStore.finishOnboarding`), so a failure leaves the
+  shop unconfigured rather than half-configured, and the wizard simply appears again.
+- A PIN is **optional**: with one, the app locks and asks for it on launch; without one it opens
+  straight into the dashboard. Both choices can be changed later in **More → Settings → Security**.
 
 ### Language
 - Full English and Urdu UI, RTL layout, per-string translations (`src/app/strings.ts`), Urdu text normalization for search, and receipts in either or both languages.

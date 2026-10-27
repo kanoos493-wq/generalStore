@@ -29,14 +29,40 @@ requirement is **not** met, it says so plainly instead of implying otherwise.
 | Lockout | 5 free attempts, then 30 s → 60 → 120 → 240 → 300 s (capped), reset on success |
 | Auto-lock | configurable idle timeout, default 60 s; also re-locks when the app returns from the background after the timeout |
 | Transaction safety | locking is a UI-state change only; an in-flight database transaction is never interrupted or rolled back by the lock |
+| Salt randomness | Android `SecureRandom` through the `SecureStore` native module (`randomHex`), pooled in JS (`src/core/random.ts`). Never `Math.random` on a device; if no strong source exists the app refuses and says so |
+| Optional | the first-run wizard can be finished without a PIN; Security settings can turn the PIN lock on or off later (turning it off requires the current PIN) |
 
 Implementation: [src/services/pinService.ts](src/services/pinService.ts) with `@noble/hashes`
 scrypt (audited, pure JS, no native build step). Tests assert that the stored JSON contains no
 digits of the PIN, that the same PIN produces different verifiers on two devices (different salt),
 and that wrong PINs are rejected.
 
-On first launch the app refuses to open business data until a PIN exists. The lock screen obscures
-content behind it; the database is opened only after the PIN is verified.
+On first launch the app opens a setup wizard, not a PIN prompt. The wizard asks for the shop
+profile, then offers to set a PIN (with optional recovery questions) in the same step - the PIN is
+created **once**, and finishing the wizard signs the owner in directly instead of asking again.
+A PIN is optional; a shop that skips it gets no lock screen at all. When a PIN does exist, the lock
+screen is the only way into the data, and locking is enforced by app state rather than by obscuring
+content the user could reveal by editing styles.
+
+### Randomness (and why a native module is involved)
+
+Android's JavaScript engine has no Web Crypto: `globalThis.crypto` is `undefined` in React Native.
+`@noble/hashes`' default `randomBytes()` reads that global, so building a PIN salt on a phone threw
+`crypto.getRandomValues must be defined` and PIN creation failed on a real install.
+
+Salts now come from [src/core/random.ts](src/core/random.ts), which uses, in order:
+
+1. `globalThis.crypto.getRandomValues` when the platform provides it (desktop/Node, tests);
+2. an entropy pool filled through a `RandomProvider` installed at start-up, which on Android calls
+   `SecureStore.randomHex(n)` - Kotlin `java.security.SecureRandom`, the OS CSPRNG, returned as hex
+   and validated in JS (odd-length or non-hex input is rejected);
+3. nothing else. There is **no** `Math.random` fallback on a device: a predictable salt would be a
+   silent security downgrade, so `randomBytesSync` throws a message the UI shows instead.
+
+`primeRandomSource()` fills the pool during `appStore.initialize()`, before any PIN code can run,
+and the pool refills in the background when it drops below 128 bytes. Tests cover the hex contract,
+salt uniqueness, the native-pool path, the failure path, and PIN creation with no Web Crypto at all
+(the exact on-device case that used to crash).
 
 ## 3. Recovery
 
